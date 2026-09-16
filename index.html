@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="color-scheme" content="only light" />
+  <meta name="color-scheme" content="light dark" />
   <title>BrandLift | AI Ad Agency</title>
   <meta name="description" content="BrandLift helps businesses gain attention from customers through sharper campaigns, stronger content, and AI-assisted advertising." />
 
@@ -26,6 +26,22 @@
   <meta name="twitter:image" content="https://brandlift.co.za/assets/og-image.jpg" />
   <meta name="theme-color" content="#faf8f3" />
 
+  <!-- Applies the saved (or system) theme before the first paint so there's
+       no flash of the wrong mode. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('brandlift-theme');
+        if (t !== 'dark' && t !== 'light') {
+          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+
   <!-- The stylesheet was designed around these three faces but never loaded
        them, so every browser fell back to its system font. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,7 +51,11 @@
   <style>
 /* ============ TOKENS ============ */
 :root {
-  color-scheme: only light;
+  color-scheme: light;
+  --black: #0b0b10;
+  --cream: #faf8f3;
+  --surface: #ffffff;
+  --stroke: rgba(11, 11, 16, 0.12);
   --ink: #0b0b10;
   --ink-soft: #34333c;
   --paper: #faf8f3;
@@ -231,12 +251,12 @@ h1 { font-weight: 800; }
 
 .btn-secondary:hover {
   background: var(--ink);
-  color: var(--white);
+  color: var(--paper);
 }
 
 .btn-light {
   background: var(--white);
-  color: var(--ink);
+  color: var(--black);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -439,7 +459,7 @@ h1 { font-weight: 800; }
   padding: 8px 14px 8px 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: var(--white);
+  background: var(--surface);
 }
 
 .agency-chip span {
@@ -775,7 +795,7 @@ h1 {
   padding: 20px 22px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--white);
+  background: var(--surface);
   transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
@@ -860,7 +880,7 @@ h1 {
 
 .service-card.open .service-plus {
   background: var(--ink);
-  color: var(--white);
+  color: var(--paper);
   border-color: var(--ink);
 }
 
@@ -917,7 +937,7 @@ h1 {
   color: var(--white);
 }
 
-.process-inner h2 { color: var(--white); }
+.process-inner h2 { color: var(--paper); }
 
 .process-head {
   display: grid;
@@ -961,7 +981,7 @@ h1 {
 }
 
 .process-lane h3 {
-  color: var(--white);
+  color: var(--paper);
   font-size: 1.18rem;
   margin-bottom: 10px;
 }
@@ -1000,7 +1020,7 @@ h1 {
   border-radius: var(--r-lg);
   overflow: hidden;
   border: 1px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
   cursor: ew-resize;
 }
 
@@ -1139,7 +1159,7 @@ h1 {
 }
 
 .compare-after .mock-cta.claimed {
-  background: var(--ink);
+  background: var(--black);
 }
 
 .compare-label {
@@ -1156,7 +1176,7 @@ h1 {
 
 .compare-before .compare-label {
   left: 16px;
-  background: var(--white);
+  background: var(--surface);
   color: var(--ink-soft);
   border: 1px solid var(--line);
 }
@@ -1195,7 +1215,7 @@ h1 {
   place-items: center;
   border-radius: 50%;
   background: var(--white);
-  color: var(--ink);
+  color: var(--black);
   font-size: 1.3rem;
   box-shadow: 0 8px 20px rgba(11,11,16,0.18);
   transform: translate(-50%, -50%);
@@ -1251,7 +1271,7 @@ h1 {
   padding: 28px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .package-card.featured {
@@ -1403,7 +1423,7 @@ h1 {
   padding: 26px;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .testimonial-card .stars {
@@ -1438,7 +1458,7 @@ h1 {
   text-align: center;
   color: var(--white);
   border-radius: var(--r-lg);
-  background: linear-gradient(155deg, var(--blue-deep) 0%, var(--ink) 62%);
+  background: linear-gradient(155deg, var(--blue-deep) 0%, var(--black) 62%);
   overflow: hidden;
 }
 
@@ -1729,7 +1749,7 @@ h1 {
 
   .nav-item.active {
     background: var(--ink);
-    color: var(--white);
+    color: var(--paper);
   }
 
   .hero,
@@ -1914,7 +1934,7 @@ h1 {
   border-radius: 999px;
   border: 1px solid var(--ink);
   background: var(--ink);
-  color: var(--white);
+  color: var(--paper);
   font-family: var(--font-display);
   font-size: 0.86rem;
   font-weight: 600;
@@ -2011,7 +2031,7 @@ h1 {
 }
 
 .process-lane article:hover span {
-  color: var(--white);
+  color: var(--paper);
 }
 
 /* ============ PACKAGES: hover + suggested state ============ */
@@ -2044,7 +2064,7 @@ h1 {
   padding: 34px;
   border-radius: var(--r-lg);
   border: 1px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
   overflow: hidden;
 }
 
@@ -2128,7 +2148,7 @@ h1 {
 .finder-options button {
   appearance: none;
   border: 1px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
   color: var(--ink);
   font-family: var(--font-display);
   font-size: 0.9rem;
@@ -2148,7 +2168,7 @@ h1 {
 .finder-options button.selected {
   background: var(--ink);
   border-color: var(--ink);
-  color: var(--white);
+  color: var(--paper);
 }
 
 .finder-result {
@@ -2285,7 +2305,7 @@ h1 {
 .reply-opt.checked {
   background: var(--white);
   border-color: var(--white);
-  color: var(--ink);
+  color: var(--black);
 }
 
 .reply-opt input {
@@ -2393,7 +2413,7 @@ h1 {
 .send-via.primary {
   background: var(--white);
   border-color: var(--white);
-  color: var(--ink);
+  color: var(--black);
 }
 
 .send-via.primary:hover { background: var(--white); }
@@ -2591,7 +2611,7 @@ h1 {
 .channel-copy.done {
   background: var(--white);
   border-color: var(--white);
-  color: var(--ink);
+  color: var(--black);
 }
 
 .rail-note {
@@ -2631,7 +2651,7 @@ h1 {
   border: 0;
   border-radius: 999px;
   background: var(--ink);
-  color: var(--white);
+  color: var(--paper);
   font-family: var(--font-display);
   font-size: 0.92rem;
   font-weight: 600;
@@ -2703,7 +2723,7 @@ h1 {
   width: min(320px, calc(100vw - 40px));
   padding: 16px;
   border-radius: 20px;
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: 0 24px 60px rgba(11, 11, 16, 0.18);
   transform-origin: bottom right;
@@ -2765,7 +2785,7 @@ h1 {
 
 .dock-item .channel-icon svg { width: 19px; height: 19px; }
 
-.dock-item .channel-icon-call { background: var(--ink); color: var(--white); }
+.dock-item .channel-icon-call { background: var(--ink); color: var(--paper); }
 
 .dock-item strong {
   display: block;
@@ -2797,7 +2817,7 @@ h1 {
   max-width: 250px;
   padding: 12px 34px 12px 14px;
   border-radius: 14px 14px 4px 14px;
-  background: var(--white);
+  background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: 0 14px 34px rgba(11, 11, 16, 0.14);
   opacity: 0;
@@ -2916,7 +2936,8 @@ h1 {
 
 /* ============ RESPONSIVE (additions) ============ */
 @media (max-width: 980px) {
-  .nav-cta { margin-left: auto; margin-right: 4px; }
+  .theme-toggle { margin-left: auto; }
+  .nav-cta { margin-left: 8px; margin-right: 4px; }
   .contact-grid { grid-template-columns: 1fr; }
   .contact-rail { order: -1; }
   .finder-steps,
@@ -2952,6 +2973,457 @@ h1 {
   .channel { grid-template-columns: 40px 1fr auto; gap: 12px; padding: 12px 14px; }
   .channel-icon { width: 40px; height: 40px; }
 }
+
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle {
+  position: relative;
+  flex: 0 0 auto;
+  margin-left: 12px;
+  width: 54px;
+  height: 30px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--blue);
+  box-shadow: 0 6px 18px rgba(29, 82, 255, 0.18);
+}
+
+.theme-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--grad-brand);
+  color: var(--white);
+  transition: transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.theme-knob svg {
+  position: absolute;
+  width: 13px;
+  height: 13px;
+  transition: opacity 0.25s ease, transform 0.4s var(--ease);
+}
+
+.theme-moon {
+  opacity: 0;
+  transform: rotate(-60deg) scale(0.5);
+}
+
+:root[data-theme="dark"] .theme-knob { transform: translateX(24px); }
+:root[data-theme="dark"] .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
+:root[data-theme="dark"] .theme-moon { opacity: 1; transform: none; }
+
+/* Circular reveal when the theme flips (View Transitions API; browsers
+   without it just switch instantly). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 2; }
+
+/* ============ DARK-MODE SPOTLIGHT ============ */
+/* In dark mode the page becomes a stage: a soft light follows the cursor
+   over everything. A transform-positioned circle, so it composites cheaply. */
+.spotlight {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1100px;
+  height: 1100px;
+  margin: -550px 0 0 -550px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(29, 82, 255, 0.16) 0%, rgba(29, 82, 255, 0.05) 32%, transparent 62%);
+  mix-blend-mode: screen;
+  transition: opacity 0.6s ease;
+  will-change: transform;
+}
+
+:root[data-theme="dark"] .spotlight.on { opacity: 1; }
+:root[data-theme="dark"] .hero-glow { display: none; }
+
+/* ============ CURSOR RING (desktop) ============ */
+/* Trails the native cursor; grows and shows the lift arrow over anything
+   clickable. Difference blending keeps it visible on every surface. */
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+  display: grid;
+  place-items: center;
+  color: #000000;
+  font-size: 0;
+  font-weight: 800;
+  mix-blend-mode: difference;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease, width 0.25s var(--ease), height 0.25s var(--ease), margin 0.25s var(--ease), background 0.25s ease, font-size 0.2s ease;
+  will-change: transform;
+}
+
+.cursor-ring.on { opacity: 1; }
+.cursor-ring.hide { opacity: 0; }
+
+.cursor-ring.hot {
+  width: 50px;
+  height: 50px;
+  margin: -25px 0 0 -25px;
+  border-width: 2px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ============ SECTION RAIL (wide desktop) ============ */
+.rail {
+  position: fixed;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 45;
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rail::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--line);
+}
+
+.rail a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 0.25s ease;
+}
+
+.rail-dot {
+  position: relative;
+  z-index: 1;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--muted);
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.3s var(--ease), box-shadow 0.3s ease;
+}
+
+.rail-label {
+  opacity: 0;
+  transform: translateX(-6px);
+  white-space: nowrap;
+  transition: opacity 0.25s ease, transform 0.3s var(--ease);
+}
+
+.rail a:hover { color: var(--ink); }
+.rail a:hover .rail-dot { border-color: var(--blue); transform: scale(1.2); }
+.rail a:hover .rail-label,
+.rail a.active .rail-label { opacity: 1; transform: none; }
+
+.rail a.active { color: var(--ink); }
+
+.rail a.active .rail-dot {
+  background: var(--blue);
+  border-color: var(--blue);
+  transform: scale(1.35);
+  box-shadow: 0 0 0 4px var(--blue-tint);
+}
+
+@media (min-width: 1280px) and (hover: hover) {
+  .rail { display: flex; }
+}
+
+/* ============ SECTION NUMERALS ============ */
+/* Oversized outlined chapter numbers behind each section title. */
+.services-section,
+.packages-section,
+.proof-section,
+.process-section {
+  position: relative;
+  isolation: isolate;
+}
+
+.section-kicker[data-index] { position: relative; }
+
+.section-kicker[data-index]::before {
+  content: attr(data-index);
+  position: absolute;
+  left: -0.05em;
+  top: -0.62em;
+  z-index: -1;
+  font-family: var(--font-display);
+  font-size: 8.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--stroke);
+  pointer-events: none;
+  user-select: none;
+}
+
+.process-section { --stroke: rgba(255, 255, 255, 0.16); }
+
+@media (max-width: 620px) {
+  .section-kicker[data-index]::before { font-size: 6rem; top: -0.5em; }
+}
+
+/* ============ MANIFESTO: crossed out on scroll ============ */
+.manifesto-label p {
+  position: relative;
+  width: fit-content;
+  transition: color 0.4s ease;
+}
+
+.manifesto-label p::after {
+  content: "";
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  top: 56%;
+  height: 2px;
+  background: var(--blue);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform 0.5s var(--ease);
+}
+
+.manifesto-label p.struck { color: var(--muted); }
+.manifesto-label p.struck::after { transform: scaleX(1); }
+
+/* ============ PROCESS: scroll-fill line ============ */
+.process-lane { position: relative; }
+
+.process-lane::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 1;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #93b0ff, var(--blue));
+  transform: scaleX(var(--pp, 0));
+  transform-origin: 0 50%;
+}
+
+/* ============ HERO PIPELINE: attention travels ============ */
+.pipeline-step strong {
+  animation: pipe-pulse 3.6s ease-in-out infinite;
+}
+
+.pipeline-step:nth-child(3) strong { animation-delay: 1.2s; }
+.pipeline-step:nth-child(5) strong { animation-delay: 2.4s; }
+
+@keyframes pipe-pulse {
+  0%, 30%, 100% { color: var(--ink); transform: translateY(0); }
+  10%           { color: var(--blue); transform: translateY(-3px); }
+}
+
+.pipeline-arrow {
+  animation: pipe-arrow 3.6s ease-in-out infinite;
+}
+
+.pipeline-arrow:nth-child(4) { animation-delay: 1.2s; }
+
+@keyframes pipe-arrow {
+  0%, 12%, 40%, 100% { opacity: 0.7; transform: translateX(0); }
+  22%                 { opacity: 1; transform: translateX(4px); }
+}
+
+@media (max-width: 620px) {
+  @keyframes pipe-arrow {
+    0%, 12%, 40%, 100% { opacity: 0.7; transform: rotate(90deg) translateX(0); }
+    22%                 { opacity: 1; transform: rotate(90deg) translateX(4px); }
+  }
+}
+
+/* ============ TICKER: words open their service ============ */
+.ticker-track span {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.ticker-track span:hover { color: var(--blue); }
+
+.service-card.flash {
+  animation: card-flash 1.4s ease;
+}
+
+@keyframes card-flash {
+  0%   { box-shadow: 0 0 0 0 rgba(29, 82, 255, 0.6); }
+  100% { box-shadow: 0 0 0 16px rgba(29, 82, 255, 0); }
+}
+
+
+/* Mobile header order: the switch pushes right against the other buttons.
+   Kept last so it wins over the base .theme-toggle margin above. */
+@media (max-width: 980px) {
+  .theme-toggle { margin-left: auto; }
+}
+/* ============ DARK MODE ============ */
+/* Same design, lights off. Tokens flip first; the handful of surfaces that
+   were hard-coded for paper get explicit overrides below. The black band
+   (process) and the black pills deliberately invert to cream, so the
+   page keeps its light/dark rhythm either way. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0b0b10;
+  --surface: #14141c;
+  --ink: #f4f1ea;
+  --ink-soft: #d6d2c8;
+  --blue: #4f79ff;
+  --blue-tint: rgba(79, 121, 255, 0.16);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-on-ink: rgba(11, 11, 16, 0.14);
+  --muted: #a3a097;
+  --muted-on-ink: rgba(11, 11, 16, 0.64);
+  --stroke: rgba(255, 255, 255, 0.14);
+  --grad-brand-soft: linear-gradient(135deg, rgba(79, 121, 255, 0.18), rgba(12, 31, 143, 0.05));
+}
+
+:root[data-theme="dark"] .page-noise {
+  opacity: 0.75;
+  background-image:
+    radial-gradient(900px 620px at 88% -8%, rgba(29, 82, 255, 0.2), transparent 62%),
+    radial-gradient(760px 520px at -8% 108%, rgba(12, 31, 143, 0.22), transparent 62%),
+    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+}
+
+:root[data-theme="dark"] .lift-arrow { color: #7d9bff; }
+
+:root[data-theme="dark"] .site-header {
+  background: rgba(11, 11, 16, 0.78);
+}
+
+:root[data-theme="dark"] .nav-shell {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 20px rgba(29, 82, 255, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .nav-indicator {
+  background: linear-gradient(160deg, #ffffff 0%, #e6e2d8 100%);
+}
+
+:root[data-theme="dark"] .nav-item.active { color: var(--black); }
+
+:root[data-theme="dark"] .nav-cta-arrow { color: var(--blue); }
+
+:root[data-theme="dark"] .theme-toggle { background: #1a1a24; }
+
+@media (max-width: 980px) {
+  :root[data-theme="dark"] .nav-shell {
+    background: rgba(20, 20, 28, 0.94);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root[data-theme="dark"] .brand img,
+:root[data-theme="dark"] .footer-brand img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+:root[data-theme="dark"] .mark-stage img {
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 18px 34px rgba(79, 121, 255, 0.28));
+}
+
+:root[data-theme="dark"] .human-note {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 14px 34px rgba(29, 82, 255, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="dark"] .human-note::before {
+  background: linear-gradient(75deg, transparent 42%, rgba(255, 255, 255, 0.16) 49%, rgba(147, 176, 255, 0.18) 53%, transparent 60%);
+}
+
+:root[data-theme="dark"] .ticker-section,
+:root[data-theme="dark"] .trust-strip {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Process band flips to cream */
+:root[data-theme="dark"] .process-section { --stroke: rgba(11, 11, 16, 0.14); }
+:root[data-theme="dark"] .process-inner h2,
+:root[data-theme="dark"] .process-lane h3 { color: var(--black); }
+:root[data-theme="dark"] .process-lane span { color: var(--blue); }
+:root[data-theme="dark"] .section-kicker.dark p { color: var(--blue); }
+:root[data-theme="dark"] .section-kicker.dark span { background: linear-gradient(90deg, var(--blue), var(--blue-deep)); }
+:root[data-theme="dark"] .process-lane article:hover { background: rgba(11, 11, 16, 0.04); }
+:root[data-theme="dark"] .process-lane article:hover span { color: var(--black); }
+
+/* Compare widget: dull post goes dark, campaign post goes electric */
+:root[data-theme="dark"] .compare-after {
+  background: linear-gradient(150deg, var(--blue) 0%, var(--blue-deep) 100%);
+}
+:root[data-theme="dark"] .compare-after .mock-tag { color: var(--white); background: rgba(255, 255, 255, 0.18); }
+:root[data-theme="dark"] .compare-after .mock-lines span { background: rgba(255, 255, 255, 0.28); }
+:root[data-theme="dark"] .compare-after .mock-cta { background: var(--white); color: var(--blue-deep); }
+:root[data-theme="dark"] .compare-after .mock-cta.claimed { background: var(--black); color: var(--white); }
+:root[data-theme="dark"] .compare-before { background: #101017; }
+:root[data-theme="dark"] .compare-before .mock-avatar,
+:root[data-theme="dark"] .compare-before .mock-lines span,
+:root[data-theme="dark"] .compare-before .mock-foot span { background: #2a2a35; }
+:root[data-theme="dark"] .compare-before .mock-body p { color: #6f6e78; }
+:root[data-theme="dark"] .compare-handle::after { background: var(--white); color: var(--black); }
+
+:root[data-theme="dark"] .package-card:hover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); }
+
+:root[data-theme="dark"] .contact-card {
+  background: linear-gradient(155deg, #1d52ff 0%, #0c1f8f 46%, #12121a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 80px rgba(29, 82, 255, 0.18);
+}
+
+:root[data-theme="dark"] .dock-toggle { box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5); }
+:root[data-theme="dark"] .dock-toggle:hover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6); }
+:root[data-theme="dark"] .dock-panel,
+:root[data-theme="dark"] .dock-nudge { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
+:root[data-theme="dark"] .dock-item .channel-icon-mail { background: var(--blue-tint); color: #93b0ff; }
+
+:root[data-theme="dark"] .finder-options button.selected { color: var(--black); }
+:root[data-theme="dark"] .nav-cta,
+:root[data-theme="dark"] .dock-toggle { color: var(--black); }
+:root[data-theme="dark"] .btn-secondary:hover { color: var(--black); }
+:root[data-theme="dark"] .service-card.open .service-plus { color: var(--black); }
+:root[data-theme="dark"] .dock-item .channel-icon-call { color: var(--black); }
 
 /* ============ SCROLL REVEAL ============ */
 /* Applied via JS only (nothing is hidden without scripting) and removed
@@ -2991,6 +3463,16 @@ h1 {
   </svg>
 
   <div class="scroll-progress" aria-hidden="true"></div>
+  <div class="spotlight" aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <nav class="rail" aria-label="Page sections">
+    <a href="#home"><span class="rail-dot" aria-hidden="true"></span><span class="rail-label">Home</span></a>
+    <a href="#services"><span class="rail-dot" aria-hidden="true"></span><span class="rail-label">Services</span></a>
+    <a href="#process"><span class="rail-dot" aria-hidden="true"></span><span class="rail-label">Process</span></a>
+    <a href="#packages"><span class="rail-dot" aria-hidden="true"></span><span class="rail-label">Packages</span></a>
+    <a href="#contact"><span class="rail-dot" aria-hidden="true"></span><span class="rail-label">Contact</span></a>
+  </nav>
 
   <header class="site-header">
     <nav class="nav">
@@ -3007,6 +3489,13 @@ h1 {
         <a href="#packages" class="nav-item">Packages</a>
         <a href="#contact" class="nav-item">Get Concept</a>
       </div>
+
+      <button type="button" class="theme-toggle" aria-label="Switch to dark mode" aria-pressed="false">
+        <span class="theme-knob" aria-hidden="true">
+          <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
+          <svg class="theme-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>
+        </span>
+      </button>
 
       <button type="button" class="nav-cta" data-dock-open aria-label="Talk to us — open contact options">
         <span class="availability-dot" aria-hidden="true"></span>
@@ -3088,8 +3577,8 @@ h1 {
     <section class="ticker-section" aria-label="BrandLift capabilities">
       <p class="sr-only">Strategy, Creative, Ads, Content, AI Production, Reporting, Lead Response</p>
       <div class="ticker-track" aria-hidden="true">
-        <span>Strategy</span><span>Creative</span><span>Ads</span><span>Content</span><span>AI Production</span><span>Reporting</span><span>Lead Response</span>
-        <span>Strategy</span><span>Creative</span><span>Ads</span><span>Content</span><span>AI Production</span><span>Reporting</span><span>Lead Response</span>
+        <span data-service="1">Strategy</span><span data-service="3">Creative</span><span data-service="3">Ads</span><span data-service="2">Content</span><span data-service="4">AI Production</span><span data-service="6">Reporting</span><span data-service="7">Lead Response</span>
+        <span data-service="1">Strategy</span><span data-service="3">Creative</span><span data-service="3">Ads</span><span data-service="2">Content</span><span data-service="4">AI Production</span><span data-service="6">Reporting</span><span data-service="7">Lead Response</span>
       </div>
     </section>
 
@@ -3105,7 +3594,7 @@ h1 {
     </section>
 
     <section id="services" class="section services-section" data-section="services">
-      <div class="section-kicker">
+      <div class="section-kicker" data-index="01">
         <p>Services</p>
         <span></span>
       </div>
@@ -3238,7 +3727,7 @@ h1 {
       <div class="section process-inner">
         <div class="process-head">
           <div>
-            <div class="section-kicker dark">
+            <div class="section-kicker dark" data-index="02">
               <p>Process</p>
               <span></span>
             </div>
@@ -3274,7 +3763,7 @@ h1 {
 
     <section class="section proof-section">
       <div class="proof-copy">
-        <div class="section-kicker">
+        <div class="section-kicker" data-index="03">
           <p>Proof of thinking</p>
           <span></span>
         </div>
@@ -3323,7 +3812,7 @@ h1 {
     </section>
 
     <section id="packages" class="section packages-section" data-section="packages">
-      <div class="section-kicker">
+      <div class="section-kicker" data-index="04">
         <p>Packages</p>
         <span></span>
       </div>
@@ -3691,10 +4180,15 @@ function moveIndicator(activeItem) {
 // can be skipped instead of re-touching the DOM and re-forcing layout.
 let currentActiveId = null;
 
+const railLinks = document.querySelectorAll('.rail a');
+
 function applyActiveClasses(id) {
   navItems.forEach((item) => {
     const target = item.getAttribute('href').replace('#', '');
     item.classList.toggle('active', target === id);
+  });
+  railLinks.forEach((link) => {
+    link.classList.toggle('active', link.getAttribute('href').replace('#', '') === id);
   });
 }
 
@@ -4331,6 +4825,7 @@ window.addEventListener('scroll', () => {
   requestAnimationFrame(() => {
     updateActiveNavOnScroll();
     updateScrollProgress();
+    updateProcessLine();
     scrollScheduled = false;
   });
 }, { passive: true });
@@ -4829,6 +5324,182 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   };
   window.addEventListener('scroll', onScrollNudge, { passive: true });
 })();
+
+
+/* ============ THEME: light / dark ============ */
+(function initTheme() {
+  const KEY = 'brandlift-theme';
+  const root = document.documentElement;
+  const btn = document.querySelector('.theme-toggle');
+  const meta = document.querySelector('meta[name="theme-color"]');
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const current = () => (root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+
+  function paint(theme) {
+    root.setAttribute('data-theme', theme);
+    if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b0b10' : '#faf8f3');
+    if (btn) {
+      btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+      btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+  }
+
+  paint(current());
+  if (!btn) return;
+
+  btn.addEventListener('click', (event) => {
+    const next = current() === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem(KEY, next); } catch (err) { /* storage blocked */ }
+
+    // Circular reveal from the switch itself (keyboard activation reports
+    // no pointer position, so fall back to the button's centre).
+    const rect = btn.getBoundingClientRect();
+    const x = event.clientX || rect.left + rect.width / 2;
+    const y = event.clientY || rect.top + rect.height / 2;
+
+    if (!document.startViewTransition || reducedMotion) {
+      paint(next);
+      return;
+    }
+
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
+    const transition = document.startViewTransition(() => paint(next));
+    transition.ready.then(() => {
+      root.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+        { duration: 720, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', pseudoElement: '::view-transition-new(root)' }
+      );
+    }).catch(() => { /* transition skipped */ });
+  });
+
+  // Follow the OS setting until the visitor picks one themselves.
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    try { if (localStorage.getItem(KEY)) return; } catch (err) { /* fall through */ }
+    paint(e.matches ? 'dark' : 'light');
+  });
+})();
+
+/* ============ POINTER FOLLOWERS: spotlight (dark) + cursor ring ============ */
+(function initPointerFollowers() {
+  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!finePointer || reducedMotion) return;
+
+  const spot = document.querySelector('.spotlight');
+  const ring = document.querySelector('.cursor-ring');
+  if (!spot && !ring) return;
+
+  let tx = -999, ty = -999;
+  let sx = tx, sy = ty, rx = tx, ry = ty;
+  let frame = null;
+  let seen = false;
+
+  const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+
+  function tick() {
+    sx += (tx - sx) * 0.1;
+    sy += (ty - sy) * 0.1;
+    rx += (tx - rx) * 0.28;
+    ry += (ty - ry) * 0.28;
+    if (spot) spot.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
+    if (ring) ring.style.transform = `translate(${rx.toFixed(1)}px, ${ry.toFixed(1)}px)`;
+    const settled = Math.abs(tx - sx) < 0.4 && Math.abs(ty - sy) < 0.4 && Math.abs(tx - rx) < 0.4 && Math.abs(ty - ry) < 0.4;
+    frame = settled ? null : requestAnimationFrame(tick);
+  }
+
+  document.addEventListener('pointermove', (event) => {
+    tx = event.clientX;
+    ty = event.clientY;
+    if (!seen) {
+      seen = true;
+      sx = rx = tx;
+      sy = ry = ty;
+    }
+    if (spot) spot.classList.toggle('on', isDark());
+    if (ring) {
+      const target = event.target;
+      const overField = target.closest('input, textarea, select, .compare');
+      const overClickable = !overField && target.closest('a, button, [role="button"], label, .nav-shell, .ticker-track span');
+      ring.classList.add('on');
+      ring.classList.toggle('hide', Boolean(overField));
+      ring.classList.toggle('hot', Boolean(overClickable));
+    }
+    if (!frame) frame = requestAnimationFrame(tick);
+  }, { passive: true });
+
+  document.addEventListener('pointerleave', () => {
+    if (spot) spot.classList.remove('on');
+    if (ring) ring.classList.remove('on');
+  });
+
+  document.addEventListener('pointerenter', () => {
+    if (ring && seen) ring.classList.add('on');
+  });
+})();
+
+/* ============ MANIFESTO: cross out the noise ============ */
+(function initManifestoStrike() {
+  const label = document.querySelector('.manifesto-label');
+  if (!label || !('IntersectionObserver' in window)) return;
+  const lines = [...label.querySelectorAll('p')];
+  const observer = new IntersectionObserver(([entry]) => {
+    if (!entry.isIntersecting) return;
+    observer.disconnect();
+    lines.forEach((line, i) => setTimeout(() => line.classList.add('struck'), 350 + i * 320));
+  }, { threshold: 0.6 });
+  observer.observe(label);
+})();
+
+/* ============ TICKER: each word opens its service ============ */
+(function initTickerLinks() {
+  const words = document.querySelectorAll('.ticker-track span[data-service]');
+  if (!words.length) return;
+
+  function openService(index) {
+    const card = serviceCards[index];
+    if (!card) return;
+    const button = card.querySelector('.service-toggle');
+    const plus = card.querySelector('.service-plus');
+    card.classList.add('open');
+    button.setAttribute('aria-expanded', 'true');
+    plus.textContent = '−';
+    card.classList.remove('flash');
+    void card.offsetWidth;
+    card.classList.add('flash');
+  }
+
+  words.forEach((word) => {
+    word.addEventListener('click', () => {
+      const index = parseInt(word.dataset.service, 10) - 1;
+      const card = serviceCards[index];
+      openService(index);
+      if (!card) { scrollToId('services'); return; }
+      const targetY = Math.max(0, card.getBoundingClientRect().top + window.scrollY - 120);
+      isNavigatingViaClick = true;
+      setActiveNav('services');
+      clearTimeout(navigatingTimeout);
+      navigatingTimeout = setTimeout(markNavigatingDone, 1200);
+      animateScrollTo(targetY);
+    });
+  });
+})();
+
+/* ============ PROCESS: line fills as you scroll through ============ */
+const processLane = document.querySelector('.process-lane');
+
+function updateProcessLine() {
+  if (!processLane || navShell.classList.contains('open')) return;
+  const rect = processLane.getBoundingClientRect();
+  const vh = window.innerHeight;
+  const start = vh * 0.9;
+  const end = vh * 0.25;
+  const p = (start - rect.top) / (start - end + rect.height * 0.4);
+  processLane.style.setProperty('--pp', Math.max(0, Math.min(1, p)).toFixed(3));
+}
+
+updateProcessLine();
+window.addEventListener('resize', updateProcessLine);
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
