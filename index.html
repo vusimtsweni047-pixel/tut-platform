@@ -4531,9 +4531,9 @@ html:not(.js) .dock-item-chat { display: none; }
 
       <!-- A real link to the contact section, so it always does something.
            With scripts running it opens the contact panel instead. -->
-      <a class="nav-cta" href="#contact" data-dock-open aria-label="Talk to us">
+      <a class="nav-cta" href="#contact" data-dock-open aria-label="Contact us">
         <span class="availability-dot" aria-hidden="true"></span>
-        <span class="nav-cta-text">Talk to us</span>
+        <span class="nav-cta-text">Contact us</span>
         <span class="nav-cta-arrow" aria-hidden="true">↗</span>
       </a>
 
@@ -6512,18 +6512,23 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
 /**
  * Two followers with deliberately different jobs:
  *
- *  - The ring IS the cursor, so it must be exactly under the pointer. It is
- *    drawn at the raw coordinate of the most recent pointer event, written
- *    once per animation frame. No smoothing on the position at all: any
- *    easing factor below 1 leaves the ring permanently behind a moving
- *    pointer (at 0.28/frame it trailed by ~40px during a fast sweep and
- *    took ~20 frames to catch up after a jump), which reads as lag.
- *  - The spotlight is a soft 1100px glow, where a gentle trail is the
- *    point, so it keeps its easing.
+ *  - The ring IS the cursor, so it must sit exactly under the pointer. It
+ *    is drawn at the raw coordinate of the most recent pointer event,
+ *    written once per animation frame, with no smoothing on the position
+ *    at all: any easing below 1 leaves it permanently behind a moving
+ *    pointer, which reads as lag.
+ *  - The spotlight is a soft glow, where a gentle trail is the point, so
+ *    it keeps its easing.
+ *
+ * Everything the ring does in response to what is under it is a change of
+ * scale, eased in JS. Nothing toggles opacity, because fading out over one
+ * form field and back in over the gap to the next made the ring blink its
+ * way across the contact form. `hide` is now only for the pointer actually
+ * leaving the window.
  *
  * `pointerrawupdate` (where supported) delivers positions at the pointer's
- * own sampling rate instead of the coalesced once-per-frame `pointermove`,
- * so the coordinate used on each frame is the freshest one available.
+ * own sampling rate rather than the coalesced once-per-frame `pointermove`,
+ * so each frame uses the freshest coordinate available.
  */
 (function initPointerFollowers() {
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -6536,7 +6541,11 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
 
   const SPOT_EASE = 0.16;
   const SCALE_EASE = 0.38;
-  const HOT_SCALE = 1.95;
+  const SCALE_CLICKABLE = 1.95;
+  const SCALE_TEXT = 0.6;
+
+  const CLICKABLE = 'a, button, summary, label, [role="button"], .nav-shell, .compare, .chat-chip';
+  const TEXT_FIELD = 'input:not([type="radio"]):not([type="checkbox"]):not([type="range"]), textarea, select';
 
   let tx = -999, ty = -999;
   let sx = tx, sy = ty;
@@ -6547,69 +6556,111 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
 
   const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
 
-  function tick() {
-    frame = null;
-
+  function draw() {
     if (ring) {
-      scale += (targetScale - scale) * SCALE_EASE;
-      if (Math.abs(targetScale - scale) < 0.004) scale = targetScale;
       // translate3d keeps this on the compositor; the scale rides along in
       // the same transform so the position stays exact while it eases.
       ring.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale.toFixed(3)})`;
     }
-
     if (spot) {
-      sx += (tx - sx) * SPOT_EASE;
-      sy += (ty - sy) * SPOT_EASE;
       spot.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0)`;
     }
+  }
+
+  function tick() {
+    frame = null;
+
+    scale += (targetScale - scale) * SCALE_EASE;
+    if (Math.abs(targetScale - scale) < 0.004) scale = targetScale;
+
+    sx += (tx - sx) * SPOT_EASE;
+    sy += (ty - sy) * SPOT_EASE;
+
+    draw();
 
     // Keep going only while something is still easing. The ring's position
     // is already exact, so it never keeps the loop alive on its own.
     const spotSettled = !spot || (Math.abs(tx - sx) < 0.4 && Math.abs(ty - sy) < 0.4);
-    const scaleSettled = scale === targetScale;
-    if (!spotSettled || !scaleSettled) frame = requestAnimationFrame(tick);
+    if (!spotSettled || scale !== targetScale) frame = requestAnimationFrame(tick);
   }
 
   function schedule() {
     if (frame === null) frame = requestAnimationFrame(tick);
   }
 
+  /**
+   * Places everything at a point with no easing. Used the first time the
+   * pointer is seen and whenever it re-enters the window — otherwise the
+   * ring reappeared where it left and then snapped across, and the
+   * spotlight swept the whole page catching up.
+   */
+  function snapTo(x, y) {
+    tx = x;
+    ty = y;
+    sx = x;
+    sy = y;
+    draw();
+  }
+
   function setPosition(event) {
-    tx = event.clientX;
-    ty = event.clientY;
     if (!seen) {
       seen = true;
-      sx = tx;
-      sy = ty;
+      snapTo(event.clientX, event.clientY);
       if (ring) ring.classList.add('on');
+      return;
     }
+    tx = event.clientX;
+    ty = event.clientY;
     schedule();
   }
 
-  // Hover state is the only part that touches the DOM tree, so it runs on
-  // the ordinary (coalesced) move event and only when the element under
-  // the pointer actually changed — closest() on every raw sample would be
-  // wasted work on exactly the frames that need to stay cheap.
+  /**
+   * Chooses the ring's size from whatever sits under it: bigger over
+   * anything clickable, smaller over a text field so it does not sit on
+   * top of the caret, normal otherwise.
+   */
+  function applyState(element) {
+    if (!ring) return;
+    const overText = element ? element.closest(TEXT_FIELD) : null;
+    const overClickable = !overText && element ? element.closest(CLICKABLE) : null;
+    ring.classList.toggle('hot', Boolean(overClickable));
+    const next = overText ? SCALE_TEXT : (overClickable ? SCALE_CLICKABLE : 1);
+    if (next !== targetScale) {
+      targetScale = next;
+      schedule();
+    }
+  }
+
+  // Walking the DOM is the only expensive part, so it runs on the coalesced
+  // move event and only when the element under the pointer actually changed.
   function setHoverState(event) {
     if (spot) spot.classList.toggle('on', isDark());
     if (!ring) return;
+    ring.classList.remove('hide');
+    if (event.target === lastTarget) return;
+    lastTarget = event.target;
+    applyState(event.target);
+  }
 
-    ring.classList.add('on');
-    const target = event.target;
-    if (target === lastTarget) return;
-    lastTarget = target;
+  /**
+   * Scrolling slides the page under a pointer that has not moved, so what
+   * the ring is over changes with no pointer event to notice it — the ring
+   * would stay swollen over nothing, or stay small over a button. Clicking
+   * does the same when a panel opens. Re-tested once things settle rather
+   * than every frame, which is when it actually matters.
+   */
+  function retest() {
+    if (!seen || !ring) return;
+    const element = document.elementFromPoint(tx, ty);
+    lastTarget = element;
+    applyState(element);
+  }
 
-    const overField = target.closest('input, textarea, select, .compare');
-    const overClickable = !overField && target.closest('a, button, [role="button"], label, summary, .nav-shell');
-    ring.classList.toggle('hide', Boolean(overField));
-    ring.classList.toggle('hot', Boolean(overClickable));
+  let retestTimer = null;
 
-    const nextScale = overClickable ? HOT_SCALE : 1;
-    if (nextScale !== targetScale) {
-      targetScale = nextScale;
-      schedule();
-    }
+  function queueRetest(delay) {
+    clearTimeout(retestTimer);
+    retestTimer = setTimeout(retest, delay || 110);
   }
 
   if ('onpointerrawupdate' in window) {
@@ -6621,21 +6672,31 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     setHoverState(event);
   }, { passive: true });
 
-  // A click can move what is under the pointer without the pointer moving
-  // (a menu opens, a card expands), so re-test rather than leave the ring
-  // stuck in its previous state.
-  document.addEventListener('pointerdown', (event) => {
-    lastTarget = null;
-    setHoverState(event);
-  }, { passive: true });
+  window.addEventListener('scroll', () => queueRetest(), { passive: true });
+  // Panels animate open over about a third of a second, so check again
+  // once whatever the click started has finished moving.
+  document.addEventListener('click', () => queueRetest(420), { passive: true });
 
   document.addEventListener('pointerleave', () => {
     if (spot) spot.classList.remove('on');
-    if (ring) ring.classList.remove('on');
+    if (ring) ring.classList.add('hide');
   });
 
-  document.addEventListener('pointerenter', () => {
-    if (ring && seen) ring.classList.add('on');
+  document.addEventListener('pointerenter', (event) => {
+    snapTo(event.clientX, event.clientY);
+    seen = true;
+    if (ring) {
+      ring.classList.add('on');
+      ring.classList.remove('hide');
+    }
+    if (spot) spot.classList.toggle('on', isDark());
+    queueRetest(0);
+  });
+
+  // Switching windows leaves the ring stranded mid-page otherwise.
+  window.addEventListener('blur', () => {
+    if (ring) ring.classList.add('hide');
+    if (spot) spot.classList.remove('on');
   });
 })();
 
