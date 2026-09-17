@@ -3035,9 +3035,6 @@ h1 {
   transform: rotate(-60deg) scale(0.5);
 }
 
-:root[data-theme="dark"] .theme-knob { transform: translateX(24px); }
-:root[data-theme="dark"] .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
-:root[data-theme="dark"] .theme-moon { opacity: 1; transform: none; }
 
 /* Circular reveal when the theme flips (View Transitions API; browsers
    without it just switch instantly). */
@@ -3311,6 +3308,76 @@ h1 {
 @media (max-width: 980px) {
   .theme-toggle { margin-left: auto; }
 }
+
+/* ============ CSS-ONLY CONTROLS ============ */
+/* The inputs behind the menu and theme controls. Visually hidden but still
+   focusable, so keyboard users get them and CSS can read :checked. */
+.switch-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  opacity: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.switch-input:focus-visible + .theme-toggle,
+#menu-switch:focus-visible ~ .menu-toggle {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+
+/* Header controls are the smallest targets on the page and sit next to each
+   other, so each one gets a full 44px tap area without growing visually. */
+.theme-toggle,
+.menu-toggle,
+.nav-cta,
+.dock-toggle {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-toggle::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+
+.menu-toggle {
+  position: relative;
+  width: 44px;
+  height: 44px;
+}
+
+/* Menu opens with no JavaScript. The scripted path adds .open as well, so
+   either mechanism works and they stay in step. */
+#menu-switch:checked ~ .menu-toggle span:first-child {
+  transform: translateY(4px) rotate(45deg);
+}
+
+#menu-switch:checked ~ .menu-toggle span:last-child {
+  transform: translateY(-4px) rotate(-45deg);
+}
+
+@media (max-width: 980px) {
+  #menu-switch:checked ~ .nav-shell {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0s;
+  }
+}
+
+.theme-toggle { display: block; }
 /* ============ DARK MODE ============ */
 /* Same design, lights off. Tokens flip first; the handful of surfaces that
    were hard-coded for paper get explicit overrides below. The black band
@@ -3441,6 +3508,307 @@ h1 {
 :root[data-theme="dark"] .service-card.open .service-plus { color: var(--black); }
 :root[data-theme="dark"] .dock-item .channel-icon-call { color: var(--black); }
 
+
+/* Knob position. Duplicated into the unscripted variants below, so the knob
+   always matches whichever theme is actually showing. */
+:root[data-theme="dark"] .theme-knob { transform: translateX(24px); }
+:root[data-theme="dark"] .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
+:root[data-theme="dark"] .theme-moon { opacity: 1; transform: none; }
+
+/* ============ DARK MODE WITHOUT JAVASCRIPT ============ */
+/* The block above needs a script to set data-theme. These two repeat it for
+   when no script runs — in a preview pane, with scripting turned off, or
+   before the page finishes loading. The head script sets data-theme the
+   moment it runs, so :root:not([data-theme]) is true only when it did not,
+   and these can never fight the scripted version.
+
+   Together they read as "the switch flips whatever your phone is set to":
+   phone light + switch off -> light (neither applies)
+   phone light + switch on  -> dark  (first block)
+   phone dark  + switch off -> dark  (second block)
+   phone dark  + switch on  -> light (neither applies)
+
+   Each block is scoped to one phone setting, so exactly one can ever match
+   and the switch reliably flips whichever way round you started.         */
+@media (prefers-color-scheme: light) {
+/* ============ DARK MODE ============ */
+/* Same design, lights off. Tokens flip first; the handful of surfaces that
+   were hard-coded for paper get explicit overrides below. The black band
+   (process) and the black pills deliberately invert to cream, so the
+   page keeps its light/dark rhythm either way. */
+:root:not([data-theme]):has(#theme-switch:checked) {
+  color-scheme: dark;
+  --paper: #0b0b10;
+  --surface: #14141c;
+  --ink: #f4f1ea;
+  --ink-soft: #d6d2c8;
+  --blue: #4f79ff;
+  --blue-tint: rgba(79, 121, 255, 0.16);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-on-ink: rgba(11, 11, 16, 0.14);
+  --muted: #a3a097;
+  --muted-on-ink: rgba(11, 11, 16, 0.64);
+  --stroke: rgba(255, 255, 255, 0.14);
+  --grad-brand-soft: linear-gradient(135deg, rgba(79, 121, 255, 0.18), rgba(12, 31, 143, 0.05));
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .page-noise {
+  opacity: 0.75;
+  background-image:
+    radial-gradient(900px 620px at 88% -8%, rgba(29, 82, 255, 0.2), transparent 62%),
+    radial-gradient(760px 520px at -8% 108%, rgba(12, 31, 143, 0.22), transparent 62%),
+    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .lift-arrow { color: #7d9bff; }
+
+:root:not([data-theme]):has(#theme-switch:checked) .site-header {
+  background: rgba(11, 11, 16, 0.78);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .nav-shell {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 20px rgba(29, 82, 255, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .nav-indicator {
+  background: linear-gradient(160deg, #ffffff 0%, #e6e2d8 100%);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .nav-item.active { color: var(--black); }
+
+:root:not([data-theme]):has(#theme-switch:checked) .nav-cta-arrow { color: var(--blue); }
+
+:root:not([data-theme]):has(#theme-switch:checked) .theme-toggle { background: #1a1a24; }
+
+@media (max-width: 980px) {
+  :root:not([data-theme]):has(#theme-switch:checked) .nav-shell {
+    background: rgba(20, 20, 28, 0.94);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .brand img,
+:root:not([data-theme]):has(#theme-switch:checked) .footer-brand img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .mark-stage img {
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 18px 34px rgba(79, 121, 255, 0.28));
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .human-note {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 14px 34px rgba(29, 82, 255, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .human-note::before {
+  background: linear-gradient(75deg, transparent 42%, rgba(255, 255, 255, 0.16) 49%, rgba(147, 176, 255, 0.18) 53%, transparent 60%);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .ticker-section,
+:root:not([data-theme]):has(#theme-switch:checked) .trust-strip {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Process band flips to cream */
+:root:not([data-theme]):has(#theme-switch:checked) .process-section { --stroke: rgba(11, 11, 16, 0.14); }
+:root:not([data-theme]):has(#theme-switch:checked) .process-inner h2,
+:root:not([data-theme]):has(#theme-switch:checked) .process-lane h3 { color: var(--black); }
+:root:not([data-theme]):has(#theme-switch:checked) .process-lane span { color: var(--blue); }
+:root:not([data-theme]):has(#theme-switch:checked) .section-kicker.dark p { color: var(--blue); }
+:root:not([data-theme]):has(#theme-switch:checked) .section-kicker.dark span { background: linear-gradient(90deg, var(--blue), var(--blue-deep)); }
+:root:not([data-theme]):has(#theme-switch:checked) .process-lane article:hover { background: rgba(11, 11, 16, 0.04); }
+:root:not([data-theme]):has(#theme-switch:checked) .process-lane article:hover span { color: var(--black); }
+
+/* Compare widget: dull post goes dark, campaign post goes electric */
+:root:not([data-theme]):has(#theme-switch:checked) .compare-after {
+  background: linear-gradient(150deg, var(--blue) 0%, var(--blue-deep) 100%);
+}
+:root:not([data-theme]):has(#theme-switch:checked) .compare-after .mock-tag { color: var(--white); background: rgba(255, 255, 255, 0.18); }
+:root:not([data-theme]):has(#theme-switch:checked) .compare-after .mock-lines span { background: rgba(255, 255, 255, 0.28); }
+:root:not([data-theme]):has(#theme-switch:checked) .compare-after .mock-cta { background: var(--white); color: var(--blue-deep); }
+:root:not([data-theme]):has(#theme-switch:checked) .compare-after .mock-cta.claimed { background: var(--black); color: var(--white); }
+:root:not([data-theme]):has(#theme-switch:checked) .compare-before { background: #101017; }
+:root:not([data-theme]):has(#theme-switch:checked) .compare-before .mock-avatar,
+:root:not([data-theme]):has(#theme-switch:checked) .compare-before .mock-lines span,
+:root:not([data-theme]):has(#theme-switch:checked) .compare-before .mock-foot span { background: #2a2a35; }
+:root:not([data-theme]):has(#theme-switch:checked) .compare-before .mock-body p { color: #6f6e78; }
+:root:not([data-theme]):has(#theme-switch:checked) .compare-handle::after { background: var(--white); color: var(--black); }
+
+:root:not([data-theme]):has(#theme-switch:checked) .package-card:hover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); }
+
+:root:not([data-theme]):has(#theme-switch:checked) .contact-card {
+  background: linear-gradient(155deg, #1d52ff 0%, #0c1f8f 46%, #12121a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 80px rgba(29, 82, 255, 0.18);
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .dock-toggle { box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5); }
+:root:not([data-theme]):has(#theme-switch:checked) .dock-toggle:hover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6); }
+:root:not([data-theme]):has(#theme-switch:checked) .dock-panel,
+:root:not([data-theme]):has(#theme-switch:checked) .dock-nudge { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
+:root:not([data-theme]):has(#theme-switch:checked) .dock-item .channel-icon-mail { background: var(--blue-tint); color: #93b0ff; }
+
+:root:not([data-theme]):has(#theme-switch:checked) .finder-options button.selected { color: var(--black); }
+:root:not([data-theme]):has(#theme-switch:checked) .nav-cta,
+:root:not([data-theme]):has(#theme-switch:checked) .dock-toggle { color: var(--black); }
+:root:not([data-theme]):has(#theme-switch:checked) .btn-secondary:hover { color: var(--black); }
+:root:not([data-theme]):has(#theme-switch:checked) .service-card.open .service-plus { color: var(--black); }
+:root:not([data-theme]):has(#theme-switch:checked) .dock-item .channel-icon-call { color: var(--black); }
+
+
+/* Knob position. Duplicated into the unscripted variants below, so the knob
+   always matches whichever theme is actually showing. */
+:root:not([data-theme]):has(#theme-switch:checked) .theme-knob { transform: translateX(24px); }
+:root:not([data-theme]):has(#theme-switch:checked) .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
+:root:not([data-theme]):has(#theme-switch:checked) .theme-moon { opacity: 1; transform: none; }
+
+}
+@media (prefers-color-scheme: dark) {
+/* ============ DARK MODE ============ */
+/* Same design, lights off. Tokens flip first; the handful of surfaces that
+   were hard-coded for paper get explicit overrides below. The black band
+   (process) and the black pills deliberately invert to cream, so the
+   page keeps its light/dark rhythm either way. */
+:root:not([data-theme]):not(:has(#theme-switch:checked)) {
+  color-scheme: dark;
+  --paper: #0b0b10;
+  --surface: #14141c;
+  --ink: #f4f1ea;
+  --ink-soft: #d6d2c8;
+  --blue: #4f79ff;
+  --blue-tint: rgba(79, 121, 255, 0.16);
+  --line: rgba(255, 255, 255, 0.12);
+  --line-on-ink: rgba(11, 11, 16, 0.14);
+  --muted: #a3a097;
+  --muted-on-ink: rgba(11, 11, 16, 0.64);
+  --stroke: rgba(255, 255, 255, 0.14);
+  --grad-brand-soft: linear-gradient(135deg, rgba(79, 121, 255, 0.18), rgba(12, 31, 143, 0.05));
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .page-noise {
+  opacity: 0.75;
+  background-image:
+    radial-gradient(900px 620px at 88% -8%, rgba(29, 82, 255, 0.2), transparent 62%),
+    radial-gradient(760px 520px at -8% 108%, rgba(12, 31, 143, 0.22), transparent 62%),
+    radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .lift-arrow { color: #7d9bff; }
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .site-header {
+  background: rgba(11, 11, 16, 0.78);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .nav-shell {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 6px 20px rgba(29, 82, 255, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .nav-indicator {
+  background: linear-gradient(160deg, #ffffff 0%, #e6e2d8 100%);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .nav-item.active { color: var(--black); }
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .nav-cta-arrow { color: var(--blue); }
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .theme-toggle { background: #1a1a24; }
+
+@media (max-width: 980px) {
+  :root:not([data-theme]):not(:has(#theme-switch:checked)) .nav-shell {
+    background: rgba(20, 20, 28, 0.94);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .brand img,
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .footer-brand img {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .mark-stage img {
+  filter: invert(1) hue-rotate(180deg) drop-shadow(0 18px 34px rgba(79, 121, 255, 0.28));
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .human-note {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 14px 34px rgba(29, 82, 255, 0.16), inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .human-note::before {
+  background: linear-gradient(75deg, transparent 42%, rgba(255, 255, 255, 0.16) 49%, rgba(147, 176, 255, 0.18) 53%, transparent 60%);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .ticker-section,
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .trust-strip {
+  background: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Process band flips to cream */
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .process-section { --stroke: rgba(11, 11, 16, 0.14); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .process-inner h2,
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .process-lane h3 { color: var(--black); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .process-lane span { color: var(--blue); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .section-kicker.dark p { color: var(--blue); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .section-kicker.dark span { background: linear-gradient(90deg, var(--blue), var(--blue-deep)); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .process-lane article:hover { background: rgba(11, 11, 16, 0.04); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .process-lane article:hover span { color: var(--black); }
+
+/* Compare widget: dull post goes dark, campaign post goes electric */
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-after {
+  background: linear-gradient(150deg, var(--blue) 0%, var(--blue-deep) 100%);
+}
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-after .mock-tag { color: var(--white); background: rgba(255, 255, 255, 0.18); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-after .mock-lines span { background: rgba(255, 255, 255, 0.28); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-after .mock-cta { background: var(--white); color: var(--blue-deep); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-after .mock-cta.claimed { background: var(--black); color: var(--white); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-before { background: #101017; }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-before .mock-avatar,
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-before .mock-lines span,
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-before .mock-foot span { background: #2a2a35; }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-before .mock-body p { color: #6f6e78; }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .compare-handle::after { background: var(--white); color: var(--black); }
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .package-card:hover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); }
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .contact-card {
+  background: linear-gradient(155deg, #1d52ff 0%, #0c1f8f 46%, #12121a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 30px 80px rgba(29, 82, 255, 0.18);
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .dock-toggle { box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .dock-toggle:hover { box-shadow: 0 18px 40px rgba(0, 0, 0, 0.6); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .dock-panel,
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .dock-nudge { box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .dock-item .channel-icon-mail { background: var(--blue-tint); color: #93b0ff; }
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .finder-options button.selected { color: var(--black); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .nav-cta,
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .dock-toggle { color: var(--black); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .btn-secondary:hover { color: var(--black); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .service-card.open .service-plus { color: var(--black); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .dock-item .channel-icon-call { color: var(--black); }
+
+
+/* Knob position. Duplicated into the unscripted variants below, so the knob
+   always matches whichever theme is actually showing. */
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .theme-knob { transform: translateX(24px); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .theme-moon { opacity: 1; transform: none; }
+
+}
+
 /* ============ SCROLL REVEAL ============ */
 /* Applied via JS only (nothing is hidden without scripting) and removed
    again after each element finishes revealing, so its own hover
@@ -3497,6 +3865,13 @@ h1 {
         <span>BrandLift</span>
       </a>
 
+      <!-- The menu and theme controls are real checkboxes with labels rather
+           than buttons, so they work from CSS alone. In a preview pane or any
+           context where scripts do not run, they still open the menu and
+           switch the theme; JavaScript only layers extras on top (scroll
+           lock, the circular reveal, remembering the choice). -->
+      <input type="checkbox" id="menu-switch" class="switch-input" aria-label="Menu" />
+
       <div class="nav-shell" aria-label="Main navigation">
         <span class="nav-indicator" aria-hidden="true"></span>
         <a href="#home" class="nav-item active">Home</a>
@@ -3506,23 +3881,26 @@ h1 {
         <a href="#contact" class="nav-item">Get Concept</a>
       </div>
 
-      <button type="button" class="theme-toggle" aria-label="Switch to dark mode" aria-pressed="false">
-        <span class="theme-knob" aria-hidden="true">
+      <input type="checkbox" id="theme-switch" class="switch-input" aria-label="Dark mode" />
+      <label class="theme-toggle" for="theme-switch" aria-hidden="true">
+        <span class="theme-knob">
           <svg class="theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg>
           <svg class="theme-moon" viewBox="0 0 24 24" fill="currentColor"><path d="M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z"/></svg>
         </span>
-      </button>
+      </label>
 
-      <button type="button" class="nav-cta" data-dock-open aria-label="Talk to us — open contact options">
+      <!-- A real link to the contact section, so it always does something.
+           With scripts running it opens the contact panel instead. -->
+      <a class="nav-cta" href="#contact" data-dock-open aria-label="Talk to us">
         <span class="availability-dot" aria-hidden="true"></span>
         <span class="nav-cta-text">Talk to us</span>
         <span class="nav-cta-arrow" aria-hidden="true">↗</span>
-      </button>
+      </a>
 
-      <button class="menu-toggle" aria-label="Open navigation menu" aria-expanded="false">
+      <label class="menu-toggle" for="menu-switch" aria-hidden="true">
         <span></span>
         <span></span>
-      </button>
+      </label>
     </nav>
   </header>
 
@@ -4052,7 +4430,7 @@ h1 {
             <div class="availability">
               <span class="availability-dot" aria-hidden="true"></span>
               <div>
-                <strong data-avail-title>Checking our hours…</strong>
+                <strong data-avail-title>Mon–Fri, 08:00–17:00 SAST</strong>
                 <p data-avail-sub>Message us and we'll typically reply within a few hours.</p>
               </div>
             </div>
@@ -4107,7 +4485,9 @@ h1 {
       </div>
     </div>
     <div class="footer-bottom">
-      <p>© <span id="year"></span> BrandLift. All rights reserved.</p>
+      <!-- A real year here, so the line still reads correctly with no scripting.
+           The script refreshes it on load. -->
+      <p>© <span id="year">2026</span> BrandLift. All rights reserved.</p>
       <a href="#home" class="to-top">Back to top <span aria-hidden="true">↑</span></a>
     </div>
   </footer>
@@ -4139,12 +4519,12 @@ h1 {
         <span><strong>Request a concept</strong><small>Free · no obligation</small></span>
         <span class="channel-arrow" aria-hidden="true">↗</span>
       </a>
-      <p class="dock-avail"><span class="availability-dot" aria-hidden="true"></span><span data-avail-title>Checking our hours…</span></p>
+      <p class="dock-avail"><span class="availability-dot" aria-hidden="true"></span><span data-avail-title>Mon–Fri, 08:00–17:00 SAST</span></p>
     </div>
-    <button type="button" class="dock-toggle" aria-expanded="false" aria-controls="dock-panel" aria-label="Contact BrandLift">
+    <a class="dock-toggle" href="#contact" aria-expanded="false" aria-controls="dock-panel" aria-label="Contact BrandLift">
       <span class="dock-icon" aria-hidden="true"><span class="dock-arrow">↗</span><span class="dock-x">×</span></span>
       <span class="dock-label">Talk to us</span>
-    </button>
+    </a>
   </div>
 
   <script>
@@ -4170,6 +4550,7 @@ const CONTACT = {
 };
 
 const menuToggle = document.querySelector('.menu-toggle');
+const menuSwitch = document.getElementById('menu-switch');
 const navShell = document.querySelector('.nav-shell');
 const navIndicator = document.querySelector('.nav-indicator');
 const navItems = document.querySelectorAll('.nav-item');
@@ -4399,22 +4780,37 @@ function closeMobileMenu() {
   // injected into the middle of every single nav animation, on both
   // mobile and desktop, since the app was first built.
   if (!navShell.classList.contains('open')) return;
+  // Unchecking does not fire `change`, so this cannot loop back round.
+  if (menuSwitch) menuSwitch.checked = false;
   menuToggle.classList.remove('open');
   navShell.classList.remove('open');
   menuToggle.setAttribute('aria-expanded', 'false');
   unlockScroll();
 }
 
-menuToggle.addEventListener('click', () => {
-  const isOpen = menuToggle.classList.toggle('open');
-  navShell.classList.toggle('open');
-  menuToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-  if (isOpen) {
+/**
+ * The menu is a checkbox and a label, so CSS alone opens it and it keeps
+ * working where scripts do not run. This mirrors that state onto the
+ * classes the rest of the script already reads, and adds the background
+ * scroll lock, which CSS cannot do on its own.
+ */
+function applyMenuState(open) {
+  menuToggle.classList.toggle('open', open);
+  navShell.classList.toggle('open', open);
+  menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) {
     lockScroll();
   } else {
     unlockScroll();
   }
-});
+}
+
+if (menuSwitch) {
+  // Browsers restore checkbox state across a reload; the menu should never
+  // come back open, so start from closed.
+  menuSwitch.checked = false;
+  menuSwitch.addEventListener('change', () => applyMenuState(menuSwitch.checked));
+}
 
 // Every same-page anchor — nav links, hero CTAs, package "Request this
 // package" links — goes through the same custom scroll so the whole site
@@ -4423,6 +4819,10 @@ menuToggle.addEventListener('click', () => {
 document.querySelectorAll('a[href^="#"]').forEach((link) => {
   const id = link.getAttribute('href').replace('#', '');
   if (!document.getElementById(id)) return;
+  // The contact buttons point at #contact so they do something useful with
+  // no scripting. With scripting they open the contact panel instead, which
+  // their own handlers take care of.
+  if (link.hasAttribute('data-dock-open') || link.classList.contains('dock-toggle')) return;
 
   link.addEventListener('click', (event) => {
     event.preventDefault();
@@ -5294,13 +5694,19 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     syncHidden();
   }
 
-  toggle.addEventListener('click', () => setOpen(!isOpen));
+  // The toggle is a link to #contact so it still works unscripted; here it
+  // opens the panel instead of navigating.
+  toggle.addEventListener('click', (event) => {
+    event.preventDefault();
+    setOpen(!isOpen);
+  });
 
   // Folds the pill down to its icon on phones (see .dock.compact in CSS).
   setTimeout(() => dock.classList.add('compact'), 6000);
 
   document.querySelectorAll('[data-dock-open]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
       closeMobileMenu();
       setOpen(true);
     });
@@ -5353,7 +5759,8 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
 (function initTheme() {
   const KEY = 'brandlift-theme';
   const root = document.documentElement;
-  const btn = document.querySelector('.theme-toggle');
+  const input = document.getElementById('theme-switch');
+  const face = document.querySelector('.theme-toggle');
   const meta = document.querySelector('meta[name="theme-color"]');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -5362,24 +5769,31 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   function paint(theme) {
     root.setAttribute('data-theme', theme);
     if (meta) meta.setAttribute('content', theme === 'dark' ? '#0b0b10' : '#faf8f3');
-    if (btn) {
-      btn.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
-      btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-    }
+    // Keep the checkbox in step. It is what CSS reads when no script runs,
+    // and browsers restore its state across reloads.
+    if (input) input.checked = theme === 'dark';
   }
 
   paint(current());
-  if (!btn) return;
+  if (!input) return;
 
-  btn.addEventListener('click', (event) => {
-    const next = current() === 'dark' ? 'light' : 'dark';
+  // A change event carries no coordinates, so remember where the tap landed
+  // and start the reveal from there.
+  let origin = null;
+  if (face) {
+    face.addEventListener('pointerdown', (event) => {
+      origin = { x: event.clientX, y: event.clientY };
+    });
+  }
+
+  input.addEventListener('change', () => {
+    const next = input.checked ? 'dark' : 'light';
     try { localStorage.setItem(KEY, next); } catch (err) { /* storage blocked */ }
 
-    // Circular reveal from the switch itself (keyboard activation reports
-    // no pointer position, so fall back to the button's centre).
-    const rect = btn.getBoundingClientRect();
-    const x = event.clientX || rect.left + rect.width / 2;
-    const y = event.clientY || rect.top + rect.height / 2;
+    const rect = face ? face.getBoundingClientRect() : null;
+    const x = origin ? origin.x : (rect ? rect.left + rect.width / 2 : window.innerWidth / 2);
+    const y = origin ? origin.y : (rect ? rect.top + rect.height / 2 : 0);
+    origin = null;
 
     if (!document.startViewTransition || reducedMotion) {
       paint(next);
