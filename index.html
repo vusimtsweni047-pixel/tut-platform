@@ -36,8 +36,10 @@
           t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
         }
         document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.classList.add('js');
       } catch (e) {
         document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.classList.add('js');
       }
     })();
   </script>
@@ -682,7 +684,7 @@ h1 {
   to { transform: translateX(-50%); }
 }
 
-.ticker-track span {
+.ticker-track a {
   display: inline-flex;
   align-items: center;
   gap: 28px;
@@ -694,7 +696,7 @@ h1 {
   white-space: nowrap;
 }
 
-.ticker-track span::after {
+.ticker-track a::after {
   content: "↗";
   color: var(--blue);
   font-size: 0.9rem;
@@ -2125,11 +2127,6 @@ h1 {
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.finder-q:not(.unlocked) {
-  opacity: 0.45;
-  pointer-events: none;
-}
-
 .q-label {
   margin: 0 0 12px;
   font-family: var(--font-mono);
@@ -2185,11 +2182,6 @@ h1 {
   opacity: 0;
   transform: translateY(10px);
   transition: opacity 0.4s ease, transform 0.5s var(--ease);
-}
-
-.finder-result.show {
-  opacity: 1;
-  transform: none;
 }
 
 .finder-result-kicker {
@@ -3281,12 +3273,12 @@ h1 {
 }
 
 /* ============ TICKER: words open their service ============ */
-.ticker-track span {
+.ticker-word {
   cursor: pointer;
   transition: color 0.2s ease;
 }
 
-.ticker-track span:hover { color: var(--blue); }
+.ticker-word:hover { color: var(--blue); }
 
 /* The marquee never stops on a phone (there is no hover), so a word was a
    moving target you had to chase. A finger down freezes it, which makes
@@ -3378,6 +3370,274 @@ h1 {
 }
 
 .theme-toggle { display: block; }
+
+/* ============ WORKS WITHOUT SCRIPTING ============ */
+/* Everything below drives a control from markup and CSS alone, so the page
+   behaves the same whether or not scripts run. Where scripting is genuinely
+   required (clipboard access) the affordance is hidden rather than left
+   sitting there doing nothing. */
+
+html:not(.js) .channel-copy { display: none; }
+
+/* ---- Menu: shown while it is the URL's :target ---- */
+.menu-open-btn,
+.menu-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+@media (max-width: 980px) {
+  .menu-open-btn { display: flex; }
+
+  .nav-shell:target {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0s linear 0s;
+  }
+
+  .nav-shell:target ~ .menu-open-btn,
+  .nav-shell.open ~ .menu-open-btn { display: none; }
+
+  .nav-shell:target ~ .menu-close-btn,
+  .nav-shell.open ~ .menu-close-btn { display: flex; }
+
+  .menu-close-btn span:first-child { transform: translateY(4px) rotate(45deg); }
+  .menu-close-btn span:last-child { transform: translateY(-4px) rotate(-45deg); }
+}
+
+/* ---- Service cards are native <details> ---- */
+.service-card > summary {
+  display: block;
+  cursor: pointer;
+  list-style: none;
+  margin: 0;
+}
+
+.service-card > summary::-webkit-details-marker { display: none; }
+.service-card > summary::marker { content: ""; }
+
+.service-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.service-plus::before { content: "+"; }
+.service-card[open] .service-plus::before { content: "\2212"; }
+
+.service-card[open] {
+  border-color: rgba(29, 82, 255, 0.5);
+  box-shadow: 0 14px 34px rgba(11, 11, 16, 0.06);
+}
+
+.service-card[open] .service-plus {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.service-card[open] .service-plus::after { animation: none; }
+
+/* <details> shows and hides its own content, so the old height animation is
+   replaced by a short fade-in on open. */
+.service-card .service-more {
+  max-height: none;
+  overflow: visible;
+  opacity: 1;
+  margin-top: 14px;
+}
+
+.service-card[open] .service-more { animation: service-open 0.32s var(--ease); }
+
+@keyframes service-open {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---- Compare: tap a version as well as dragging ---- */
+.compare-views {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.compare-view {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 9px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.compare-view:hover { border-color: var(--blue); transform: translateY(-1px); }
+
+#cmp-before:checked ~ .compare-views [for="cmp-before"],
+#cmp-split:checked ~ .compare-views [for="cmp-split"],
+#cmp-after:checked ~ .compare-views [for="cmp-after"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+#cmp-before:checked ~ .compare { --pos: 100%; }
+#cmp-after:checked ~ .compare { --pos: 0%; }
+
+/* The drag handle only means anything in the split view. */
+.compare-handle { transition: opacity 0.25s ease; }
+
+#cmp-before:checked ~ .compare .compare-handle,
+#cmp-after:checked ~ .compare .compare-handle { opacity: 0; }
+
+/* ---- Mock "Claim offer" pill ---- */
+.claim-done { display: none; }
+#mock-claim:checked + .mock-cta .claim-idle { display: none; }
+#mock-claim:checked + .mock-cta .claim-done { display: inline; }
+#mock-claim:checked + .mock-cta { background: var(--black); }
+
+/* ---- "What happens next" chips ---- */
+.next-step-detail p { display: none; }
+
+#ns-1:checked ~ .next-step-detail,
+#ns-2:checked ~ .next-step-detail,
+#ns-3:checked ~ .next-step-detail {
+  max-height: 160px;
+  opacity: 1;
+}
+
+#ns-1:checked ~ .next-step-detail .nsd-1,
+#ns-2:checked ~ .next-step-detail .nsd-2,
+#ns-3:checked ~ .next-step-detail .nsd-3 { display: block; }
+
+#ns-1:checked ~ .next-steps [for="ns-1"],
+#ns-2:checked ~ .next-steps [for="ns-2"],
+#ns-3:checked ~ .next-steps [for="ns-3"] {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #93b0ff;
+  color: var(--white);
+}
+
+/* ---- Form chips ---- */
+.switch-input:checked + .topic-chip,
+.switch-input:checked + .reply-opt {
+  background: var(--white);
+  border-color: var(--white);
+  color: var(--black);
+}
+
+.switch-input:focus-visible + .topic-chip,
+.switch-input:focus-visible + .reply-opt,
+.switch-input:focus-visible + .next-step,
+.switch-input:focus-visible + .compare-view,
+.switch-input:focus-visible + .mock-cta {
+  outline: 2px solid #93b0ff;
+  outline-offset: 2px;
+}
+
+/* ---- Package finder ---- */
+.finder-options label {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.finder-options label:hover { border-color: var(--blue); transform: translateY(-1px); }
+
+#fg-test:checked ~ .finder-steps [for="fg-test"],
+#fg-visible:checked ~ .finder-steps [for="fg-visible"],
+#fg-support:checked ~ .finder-steps [for="fg-support"],
+#fl-fast:checked ~ .finder-steps [for="fl-fast"],
+#fl-slow:checked ~ .finder-steps [for="fl-slow"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+/* Question two stays dimmed until question one is answered. */
+.finder-q-leads { opacity: 0.45; pointer-events: none; }
+
+#fg-test:checked ~ .finder-steps .finder-q-leads,
+#fg-visible:checked ~ .finder-steps .finder-q-leads,
+#fg-support:checked ~ .finder-steps .finder-q-leads {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.finder-result { display: none; }
+.finder-result .fr { display: none; }
+
+#fg-test:checked ~ #fl-fast:checked ~ .finder-result,
+#fg-test:checked ~ #fl-slow:checked ~ .finder-result,
+#fg-visible:checked ~ #fl-fast:checked ~ .finder-result,
+#fg-visible:checked ~ #fl-slow:checked ~ .finder-result,
+#fg-support:checked ~ #fl-fast:checked ~ .finder-result,
+#fg-support:checked ~ #fl-slow:checked ~ .finder-result {
+  display: grid;
+  opacity: 1;
+  transform: none;
+  animation: finder-in 0.4s var(--ease);
+}
+
+#fg-test:checked ~ #fl-fast:checked ~ .finder-result .fr-test-fast,
+#fg-test:checked ~ #fl-slow:checked ~ .finder-result .fr-test-slow,
+#fg-visible:checked ~ #fl-fast:checked ~ .finder-result .fr-visible-fast,
+#fg-visible:checked ~ #fl-slow:checked ~ .finder-result .fr-visible-slow,
+#fg-support:checked ~ #fl-fast:checked ~ .finder-result .fr-support-fast,
+#fg-support:checked ~ #fl-slow:checked ~ .finder-result .fr-support-slow { display: block; }
+
+@keyframes finder-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+.finder-result h4 {
+  margin: 0 0 8px;
+  color: var(--white);
+  font-size: 1.3rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+/* The recommended package highlights itself as soon as question one is
+   answered, with no scripting. */
+.packages-section:has(#fg-test:checked) .package-card:nth-of-type(1),
+.packages-section:has(#fg-visible:checked) .package-card:nth-of-type(2),
+.packages-section:has(#fg-support:checked) .package-card:nth-of-type(3) {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(29, 82, 255, 0.18), 0 18px 40px rgba(29, 82, 255, 0.14);
+}
+
+.packages-section:has(#fg-test:checked) .package-card:nth-of-type(1) .package-top p::after,
+.packages-section:has(#fg-visible:checked) .package-card:nth-of-type(2) .package-top p::after,
+.packages-section:has(#fg-support:checked) .package-card:nth-of-type(3) .package-top p::after {
+  content: " \00b7 Suggested for you";
+}
+
+/* The mobile menu sits over the headline, so it has to be readable rather
+   than merely translucent. Keeps the blur, raises the tint. */
+@media (max-width: 980px) {
+  .nav-shell {
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%);
+  }
+}
 /* ============ DARK MODE ============ */
 /* Same design, lights off. Tokens flip first; the handful of surfaces that
    were hard-coded for paper get explicit overrides below. The black band
@@ -3865,14 +4125,15 @@ h1 {
         <span>BrandLift</span>
       </a>
 
-      <!-- The menu and theme controls are real checkboxes with labels rather
-           than buttons, so they work from CSS alone. In a preview pane or any
-           context where scripts do not run, they still open the menu and
-           switch the theme; JavaScript only layers extras on top (scroll
-           lock, the circular reveal, remembering the choice). -->
-      <input type="checkbox" id="menu-switch" class="switch-input" aria-label="Menu" />
-
-      <div class="nav-shell" aria-label="Main navigation">
+      <!-- The menu panel is shown while it is the URL's :target, and the
+           theme control is a checkbox with a label. Both therefore work from
+           CSS alone, with no scripting: important in a preview pane, with
+           scripts blocked, or before the page has finished loading. Because
+           the panel keys off :target, tapping any nav link moves the target
+           to that section and the menu closes itself — nobody has to dismiss
+           it first. Scripting only layers extras on top: the background
+           scroll lock, the circular reveal, remembering the theme. -->
+      <div class="nav-shell" id="menu" aria-label="Main navigation">
         <span class="nav-indicator" aria-hidden="true"></span>
         <a href="#home" class="nav-item active">Home</a>
         <a href="#services" class="nav-item">Services</a>
@@ -3897,10 +4158,16 @@ h1 {
         <span class="nav-cta-arrow" aria-hidden="true">↗</span>
       </a>
 
-      <label class="menu-toggle" for="menu-switch" aria-hidden="true">
+      <a class="menu-toggle menu-open-btn" href="#menu" aria-label="Open navigation menu" aria-expanded="false">
         <span></span>
         <span></span>
-      </label>
+      </a>
+      <!-- #menu-closed matches nothing, which clears :target without moving
+           the page, so this closes the menu and leaves the scroll alone. -->
+      <a class="menu-toggle menu-close-btn" href="#menu-closed" aria-label="Close navigation menu">
+        <span></span>
+        <span></span>
+      </a>
     </nav>
   </header>
 
@@ -3971,8 +4238,8 @@ h1 {
     <section class="ticker-section" aria-label="BrandLift capabilities">
       <p class="sr-only">Strategy, Creative, Ads, Content, AI Production, Reporting, Lead Response</p>
       <div class="ticker-track" aria-hidden="true">
-        <span data-service="1">Strategy</span><span data-service="3">Creative</span><span data-service="3">Ads</span><span data-service="2">Content</span><span data-service="4">AI Production</span><span data-service="6">Reporting</span><span data-service="7">Lead Response</span>
-        <span data-service="1">Strategy</span><span data-service="3">Creative</span><span data-service="3">Ads</span><span data-service="2">Content</span><span data-service="4">AI Production</span><span data-service="6">Reporting</span><span data-service="7">Lead Response</span>
+        <a class="ticker-word" data-service="1" href="#services">Strategy</a><a class="ticker-word" data-service="3" href="#services">Creative</a><a class="ticker-word" data-service="3" href="#services">Ads</a><a class="ticker-word" data-service="2" href="#services">Content</a><a class="ticker-word" data-service="4" href="#services">AI Production</a><a class="ticker-word" data-service="6" href="#services">Reporting</a><a class="ticker-word" data-service="7" href="#services">Lead Response</a>
+        <a class="ticker-word" data-service="1" href="#services">Strategy</a><a class="ticker-word" data-service="3" href="#services">Creative</a><a class="ticker-word" data-service="3" href="#services">Ads</a><a class="ticker-word" data-service="2" href="#services">Content</a><a class="ticker-word" data-service="4" href="#services">AI Production</a><a class="ticker-word" data-service="6" href="#services">Reporting</a><a class="ticker-word" data-service="7" href="#services">Lead Response</a>
       </div>
     </section>
 
@@ -4000,13 +4267,13 @@ h1 {
       </div>
 
       <div class="service-grid">
-        <article class="service-card">
-          <button class="service-toggle" aria-expanded="false">
-            <span class="service-number">01</span>
-            <span class="service-plus">+</span>
-          </button>
-          <h3>Campaign Concepts</h3>
-          <p class="service-short">Focused campaign ideas for your business, product, service, event, or offer.</p>
+        <details class="service-card">
+          <summary class="service-toggle">
+            <span class="service-head"><span class="service-number">01</span>
+            <span class="service-plus" aria-hidden="true"></span></span>
+            <h3>Campaign Concepts</h3>
+            <p class="service-short">Focused campaign ideas for your business, product, service, event, or offer.</p>
+          </summary>
           <div class="service-more">
             <p>We turn a business goal into a clear campaign direction — message, audience angle, creative idea, content pillars, and the call-to-action customers should take.</p>
             <ul>
@@ -4014,15 +4281,15 @@ h1 {
               <li><strong>Output:</strong> a clear direction your business can execute.</li>
             </ul>
           </div>
-        </article>
+        </details>
 
-        <article class="service-card">
-          <button class="service-toggle" aria-expanded="false">
-            <span class="service-number">02</span>
-            <span class="service-plus">+</span>
-          </button>
-          <h3>Social Content</h3>
-          <p class="service-short">Post ideas, captions, themes, and creative direction for consistent visibility.</p>
+        <details class="service-card">
+          <summary class="service-toggle">
+            <span class="service-head"><span class="service-number">02</span>
+            <span class="service-plus" aria-hidden="true"></span></span>
+            <h3>Social Content</h3>
+            <p class="service-short">Post ideas, captions, themes, and creative direction for consistent visibility.</p>
+          </summary>
           <div class="service-more">
             <p>Random posts don't build recognition. We build content themes that make people understand what you do, why it matters, and why they should choose you.</p>
             <ul>
@@ -4030,15 +4297,15 @@ h1 {
               <li><strong>Output:</strong> post ideas, captions, themes, and creative prompts.</li>
             </ul>
           </div>
-        </article>
+        </details>
 
-        <article class="service-card">
-          <button class="service-toggle" aria-expanded="false">
-            <span class="service-number">03</span>
-            <span class="service-plus">+</span>
-          </button>
-          <h3>Ad Creative Direction</h3>
-          <p class="service-short">Ad angles and messages shaped to attract the right customer attention.</p>
+        <details class="service-card">
+          <summary class="service-toggle">
+            <span class="service-head"><span class="service-number">03</span>
+            <span class="service-plus" aria-hidden="true"></span></span>
+            <h3>Ad Creative Direction</h3>
+            <p class="service-short">Ad angles and messages shaped to attract the right customer attention.</p>
+          </summary>
           <div class="service-more">
             <p>Together we figure out what the ad should say, who it should speak to, and what reason will make people stop scrolling.</p>
             <ul>
@@ -4046,15 +4313,15 @@ h1 {
               <li><strong>Output:</strong> hooks, ad copy angles, CTA ideas, creative direction.</li>
             </ul>
           </div>
-        </article>
+        </details>
 
-        <article class="service-card">
-          <button class="service-toggle" aria-expanded="false">
-            <span class="service-number">04</span>
-            <span class="service-plus">+</span>
-          </button>
-          <h3>AI-Assisted Production</h3>
-          <p class="service-short">Faster content production using AI while keeping the strategy human and clear.</p>
+        <details class="service-card">
+          <summary class="service-toggle">
+            <span class="service-head"><span class="service-number">04</span>
+            <span class="service-plus" aria-hidden="true"></span></span>
+            <h3>AI-Assisted Production</h3>
+            <p class="service-short">Faster content production using AI while keeping the strategy human and clear.</p>
+          </summary>
           <div class="service-more">
             <p>We use AI to speed up ideas, scripts, visuals, drafts, and variations. The thinking stays human: customer, offer, and business goal first.</p>
             <ul>
@@ -4062,15 +4329,15 @@ h1 {
               <li><strong>Output:</strong> faster drafts, scripts, captions, visual prompts.</li>
             </ul>
           </div>
-        </article>
+        </details>
 
-        <article class="service-card">
-          <button class="service-toggle" aria-expanded="false">
-            <span class="service-number">05</span>
-            <span class="service-plus">+</span>
-          </button>
-          <h3>Landing Page Messaging</h3>
-          <p class="service-short">Website and page copy that explains your offer and guides people to act.</p>
+        <details class="service-card">
+          <summary class="service-toggle">
+            <span class="service-head"><span class="service-number">05</span>
+            <span class="service-plus" aria-hidden="true"></span></span>
+            <h3>Landing Page Messaging</h3>
+            <p class="service-short">Website and page copy that explains your offer and guides people to act.</p>
+          </summary>
           <div class="service-more">
             <p>Confusing pages lose visitors. Structuring them well makes the offer clear, shows why it matters, and guides the visitor to act.</p>
             <ul>
@@ -4078,15 +4345,15 @@ h1 {
               <li><strong>Output:</strong> headlines, section flow, offer copy, CTA messaging.</li>
             </ul>
           </div>
-        </article>
+        </details>
 
-        <article class="service-card">
-          <button class="service-toggle" aria-expanded="false">
-            <span class="service-number">06</span>
-            <span class="service-plus">+</span>
-          </button>
-          <h3>Reporting</h3>
-          <p class="service-short">Simple campaign reports showing what was created, tested, learned, and improved.</p>
+        <details class="service-card">
+          <summary class="service-toggle">
+            <span class="service-head"><span class="service-number">06</span>
+            <span class="service-plus" aria-hidden="true"></span></span>
+            <h3>Reporting</h3>
+            <p class="service-short">Simple campaign reports showing what was created, tested, learned, and improved.</p>
+          </summary>
           <div class="service-more">
             <p>We keep reporting practical: what went out, what message was tested, what response came back, and what should be sharpened next.</p>
             <ul>
@@ -4094,18 +4361,18 @@ h1 {
               <li><strong>Output:</strong> campaign summary and improvement notes.</li>
             </ul>
           </div>
-        </article>
+        </details>
 
-        <article class="service-card service-card-wide">
-          <button class="service-toggle" aria-expanded="false">
-            <span class="service-head-left">
+        <details class="service-card service-card-wide">
+          <summary class="service-toggle">
+            <span class="service-head"><span class="service-head-left">
               <span class="service-number">07</span>
               <span class="service-new">New</span>
             </span>
-            <span class="service-plus">+</span>
-          </button>
-          <h3>Lead Response Systems</h3>
-          <p class="service-short">Ads bring people in. This makes sure none of them slip away.</p>
+            <span class="service-plus" aria-hidden="true"></span></span>
+            <h3>Lead Response Systems</h3>
+            <p class="service-short">Ads bring people in. This makes sure none of them slip away.</p>
+          </summary>
           <div class="service-more">
             <p>Built on industrial-engineering thinking: we map the path from click to sale, set response-time standards, and give you simple follow-up templates — so every inquiry gets answered fast and nothing falls through the cracks.</p>
             <ul>
@@ -4113,7 +4380,7 @@ h1 {
               <li><strong>Output:</strong> a response playbook, follow-up templates, and a simple lead tracker.</li>
             </ul>
           </div>
-        </article>
+        </details>
       </div>
     </section>
 
@@ -4169,7 +4436,10 @@ h1 {
       </div>
 
       <div class="compare-wrap">
-        <div class="compare" style="--pos: 56%">
+        <input type="radio" name="compare-view" id="cmp-split" class="switch-input" checked />
+        <input type="radio" name="compare-view" id="cmp-before" class="switch-input" />
+        <input type="radio" name="compare-view" id="cmp-after" class="switch-input" />
+        <div class="compare">
           <div class="compare-face compare-after">
             <div class="mock-row">
               <span class="mock-avatar"></span>
@@ -4180,7 +4450,8 @@ h1 {
               <span class="mock-tag">Limited this week</span>
             </div>
             <div class="mock-foot">
-              <button type="button" class="mock-cta">Claim offer</button>
+              <input type="checkbox" id="mock-claim" class="switch-input" />
+              <label class="mock-cta" for="mock-claim"><span class="claim-idle">Claim offer</span><span class="claim-done">✓ Claimed</span></label>
             </div>
           </div>
 
@@ -4201,7 +4472,12 @@ h1 {
           <div class="compare-handle" aria-hidden="true"></div>
           <input type="range" class="compare-range" min="0" max="100" value="56" aria-label="Drag to compare a generic post with a BrandLift campaign post" />
         </div>
-        <p class="compare-caption">Drag to compare</p>
+        <div class="compare-views" role="group" aria-label="Choose which version to show">
+          <label class="compare-view" for="cmp-before">Scrolled past</label>
+          <label class="compare-view" for="cmp-split">Compare</label>
+          <label class="compare-view" for="cmp-after">BrandLift version</label>
+        </div>
+        <p class="compare-caption">Tap a version, or drag the handle</p>
       </div>
     </section>
 
@@ -4268,7 +4544,17 @@ h1 {
       <p class="pricing-note">Pricing depends on campaign scope, content volume, and advertising support needed.</p>
       <p class="pricing-note addon-note">New: <strong>Lead Response Systems</strong> can be added to any package.</p>
 
-      <div class="finder" id="finder">
+      <!-- A form of radio buttons, so the whole thing runs on CSS with no
+           scripting: each answer is a radio, and the matching recommendation
+           is revealed by the pair that is checked. "Start over" is a native
+           reset button, which clears both answers without any script. -->
+      <form class="finder" id="finder" action="#packages">
+        <input type="radio" name="f-goal" id="fg-test" class="switch-input" aria-label="Test one campaign idea" />
+        <input type="radio" name="f-goal" id="fg-visible" class="switch-input" aria-label="Show up consistently every month" />
+        <input type="radio" name="f-goal" id="fg-support" class="switch-input" aria-label="Ongoing creative and campaign support" />
+        <input type="radio" name="f-leads" id="fl-fast" class="switch-input" aria-label="We reply fast, every time" />
+        <input type="radio" name="f-leads" id="fl-slow" class="switch-input" aria-label="Some enquiries slip through" />
+
         <div class="finder-head">
           <div>
             <p class="finder-kicker">Not sure where to start?</p>
@@ -4278,35 +4564,59 @@ h1 {
         </div>
 
         <div class="finder-steps">
-          <div class="finder-q unlocked" data-q="goal" role="group" aria-labelledby="finder-q1">
+          <div class="finder-q finder-q-goal" role="group" aria-labelledby="finder-q1">
             <p class="q-label" id="finder-q1">01 · What do you need right now?</p>
             <div class="finder-options">
-              <button type="button" data-value="test">Test one campaign idea</button>
-              <button type="button" data-value="visible">Show up consistently every month</button>
-              <button type="button" data-value="support">Ongoing creative &amp; campaign support</button>
+              <label for="fg-test">Test one campaign idea</label>
+              <label for="fg-visible">Show up consistently every month</label>
+              <label for="fg-support">Ongoing creative &amp; campaign support</label>
             </div>
           </div>
-          <div class="finder-q" data-q="leads" role="group" aria-labelledby="finder-q2">
+          <div class="finder-q finder-q-leads" role="group" aria-labelledby="finder-q2">
             <p class="q-label" id="finder-q2">02 · When someone enquires, what happens?</p>
             <div class="finder-options">
-              <button type="button" data-value="fast">We reply fast, every time</button>
-              <button type="button" data-value="slow">Honestly, some slip through</button>
+              <label for="fl-fast">We reply fast, every time</label>
+              <label for="fl-slow">Honestly, some slip through</label>
             </div>
           </div>
         </div>
 
-        <div class="finder-result" aria-live="polite" hidden>
-          <div>
+        <div class="finder-result" aria-live="polite">
+          <div class="finder-result-body">
             <p class="finder-result-kicker">Our suggestion</p>
-            <h4></h4>
-            <p class="finder-why"></p>
+
+            <div class="fr fr-test-fast">
+              <h4>Starter Campaign</h4>
+              <p class="finder-why">One focused concept with content direction, a set of posts and a few ad angles — enough to see whether the idea gets a response before you commit further.</p>
+            </div>
+            <div class="fr fr-test-slow">
+              <h4>Starter Campaign + Lead Response Systems</h4>
+              <p class="finder-why">One focused concept to test the idea, plus a response playbook so the enquiries it brings in actually get answered.</p>
+            </div>
+            <div class="fr fr-visible-fast">
+              <h4>Growth Campaign</h4>
+              <p class="finder-why">Monthly planning, social content and ad direction so your business shows up consistently instead of in bursts.</p>
+            </div>
+            <div class="fr fr-visible-slow">
+              <h4>Growth Campaign + Lead Response Systems</h4>
+              <p class="finder-why">Consistent monthly visibility, plus a response playbook so the enquiries it brings in stop slipping away.</p>
+            </div>
+            <div class="fr fr-support-fast">
+              <h4>Full Support</h4>
+              <p class="finder-why">Ongoing concepts, content, landing-page messaging and reporting — a long-term creative partner rather than a one-off project.</p>
+            </div>
+            <div class="fr fr-support-slow">
+              <h4>Full Support + Lead Response Systems</h4>
+              <p class="finder-why">A long-term creative partner, with response-time standards and follow-up templates so nothing falls through the cracks.</p>
+            </div>
           </div>
+
           <div class="finder-actions">
-            <button type="button" class="btn btn-light finder-cta">Request this starting point</button>
-            <button type="button" class="finder-reset">Start over</button>
+            <a class="btn btn-light finder-cta" href="#contact">Request this starting point</a>
+            <button type="reset" class="finder-reset">Start over</button>
           </div>
         </div>
-      </div>
+      </form>
     </section>
 
     <section class="section trust-section">
@@ -4352,20 +4662,32 @@ h1 {
           to see where BrandLift can help.
         </p>
 
-        <div class="next-steps" role="group" aria-label="What happens after you submit">
-          <button type="button" class="next-step" data-step="1" aria-expanded="false">You send your site or page</button>
-          <span class="next-steps-arrow" aria-hidden="true">→</span>
-          <button type="button" class="next-step" data-step="2" aria-expanded="false">We send back a short concept</button>
-          <span class="next-steps-arrow" aria-hidden="true">→</span>
-          <button type="button" class="next-step" data-step="3" aria-expanded="false">No obligation to continue</button>
-        </div>
-        <div class="next-step-detail" aria-live="polite">
-          <p></p>
+        <!-- Radios and labels, so each step opens its own note with no
+             scripting involved. -->
+        <div class="next-steps-block">
+          <input type="radio" name="next-step" id="ns-1" class="switch-input" aria-label="You send your site or page" />
+          <input type="radio" name="next-step" id="ns-2" class="switch-input" aria-label="We send back a short concept" />
+          <input type="radio" name="next-step" id="ns-3" class="switch-input" aria-label="No obligation to continue" />
+          <div class="next-steps" role="group" aria-label="What happens after you submit">
+            <label class="next-step" for="ns-1">You send your site or page</label>
+            <span class="next-steps-arrow" aria-hidden="true">→</span>
+            <label class="next-step" for="ns-2">We send back a short concept</label>
+            <span class="next-steps-arrow" aria-hidden="true">→</span>
+            <label class="next-step" for="ns-3">No obligation to continue</label>
+          </div>
+          <div class="next-step-detail" aria-live="polite">
+            <p class="nsd-1">A link is enough — Instagram, Facebook, TikTok, or your website. No brief needed.</p>
+            <p class="nsd-2">One clear page: the campaign message, who it's for, and the first content ideas we'd run.</p>
+            <p class="nsd-3">The concept is yours to keep either way. If it clicks, we talk scope.</p>
+          </div>
         </div>
 
         <div class="contact-grid">
           <div class="contact-form-wrap">
-            <form class="contact-form" id="concept-form" novalidate>
+            <!-- action is the single place the form endpoint is set: the script
+                 reads it from here too, so there is only ever one to edit. -->
+            <form class="contact-form" id="concept-form" method="POST"
+                  action="https://formspree.io/f/YOUR_FORM_ID" novalidate>
               <p class="form-label">Request a concept</p>
 
               <div class="form-row">
@@ -4383,25 +4705,33 @@ h1 {
               <label class="sr-only" for="cf-link">Website or social media link</label>
               <input type="text" id="cf-link" name="link" placeholder="Website or social media link" autocomplete="url" />
 
+              <!-- Real checkboxes, so they tick and submit without scripting. -->
               <div class="chips-row" role="group" aria-label="What are you hoping to promote?">
                 <span class="chips-label">Promoting</span>
-                <button type="button" class="topic-chip" data-topic="A launch" aria-pressed="false">A launch</button>
-                <button type="button" class="topic-chip" data-topic="An offer" aria-pressed="false">An offer</button>
-                <button type="button" class="topic-chip" data-topic="An event" aria-pressed="false">An event</button>
-                <button type="button" class="topic-chip" data-topic="Ongoing visibility" aria-pressed="false">Ongoing visibility</button>
-                <button type="button" class="topic-chip" data-topic="Not sure yet" aria-pressed="false">Not sure yet</button>
+                <input type="checkbox" name="topics" value="A launch" id="tc-launch" class="switch-input" aria-label="A launch" />
+                <label class="topic-chip" for="tc-launch">A launch</label>
+                <input type="checkbox" name="topics" value="An offer" id="tc-offer" class="switch-input" aria-label="An offer" />
+                <label class="topic-chip" for="tc-offer">An offer</label>
+                <input type="checkbox" name="topics" value="An event" id="tc-event" class="switch-input" aria-label="An event" />
+                <label class="topic-chip" for="tc-event">An event</label>
+                <input type="checkbox" name="topics" value="Ongoing visibility" id="tc-visibility" class="switch-input" aria-label="Ongoing visibility" />
+                <label class="topic-chip" for="tc-visibility">Ongoing visibility</label>
+                <input type="checkbox" name="topics" value="Not sure yet" id="tc-unsure" class="switch-input" aria-label="Not sure yet" />
+                <label class="topic-chip" for="tc-unsure">Not sure yet</label>
               </div>
-              <input type="hidden" name="topics" value="" />
               <input type="hidden" name="interest" value="" />
 
               <label class="sr-only" for="cf-message">Anything else we should know?</label>
               <textarea id="cf-message" name="message" placeholder="Anything else we should know? (optional)" rows="3"></textarea>
 
-              <div class="chips-row" role="radiogroup" aria-label="How should we reply?">
+              <div class="chips-row" role="group" aria-label="How should we reply?">
                 <span class="chips-label">Reply via</span>
-                <label class="reply-opt checked"><input type="radio" name="reply" value="WhatsApp" checked />WhatsApp</label>
-                <label class="reply-opt"><input type="radio" name="reply" value="Email" />Email</label>
-                <label class="reply-opt"><input type="radio" name="reply" value="Call" />Call</label>
+                <input type="radio" name="reply" value="WhatsApp" id="rv-wa" class="switch-input" aria-label="Reply on WhatsApp" checked />
+                <label class="reply-opt" for="rv-wa">WhatsApp</label>
+                <input type="radio" name="reply" value="Email" id="rv-email" class="switch-input" aria-label="Reply by email" />
+                <label class="reply-opt" for="rv-email">Email</label>
+                <input type="radio" name="reply" value="Call" id="rv-call" class="switch-input" aria-label="Reply by phone" />
+                <label class="reply-opt" for="rv-call">Call</label>
               </div>
 
               <div class="form-actions">
@@ -4549,8 +4879,8 @@ const CONTACT = {
   timeZone: 'Africa/Johannesburg',
 };
 
-const menuToggle = document.querySelector('.menu-toggle');
-const menuSwitch = document.getElementById('menu-switch');
+const menuOpenBtn = document.querySelector('.menu-open-btn');
+const menuCloseBtn = document.querySelector('.menu-close-btn');
 const navShell = document.querySelector('.nav-shell');
 const navIndicator = document.querySelector('.nav-indicator');
 const navItems = document.querySelectorAll('.nav-item');
@@ -4780,24 +5110,21 @@ function closeMobileMenu() {
   // injected into the middle of every single nav animation, on both
   // mobile and desktop, since the app was first built.
   if (!navShell.classList.contains('open')) return;
-  // Unchecking does not fire `change`, so this cannot loop back round.
-  if (menuSwitch) menuSwitch.checked = false;
-  menuToggle.classList.remove('open');
-  navShell.classList.remove('open');
-  menuToggle.setAttribute('aria-expanded', 'false');
-  unlockScroll();
+  applyMenuState(false);
 }
 
 /**
- * The menu is a checkbox and a label, so CSS alone opens it and it keeps
- * working where scripts do not run. This mirrors that state onto the
- * classes the rest of the script already reads, and adds the background
- * scroll lock, which CSS cannot do on its own.
+ * The menu is opened and closed by two links, so CSS alone runs it where
+ * scripts do not: the panel shows while it is the URL's :target, which is
+ * what makes tapping a section link close it by itself.
+ *
+ * With scripting the hash is left alone — these cancel the navigation and
+ * drive the same .open class the rest of the script already reads, so the
+ * behaviour matches and the URL stays clean.
  */
 function applyMenuState(open) {
-  menuToggle.classList.toggle('open', open);
   navShell.classList.toggle('open', open);
-  menuToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (menuOpenBtn) menuOpenBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   if (open) {
     lockScroll();
   } else {
@@ -4805,11 +5132,18 @@ function applyMenuState(open) {
   }
 }
 
-if (menuSwitch) {
-  // Browsers restore checkbox state across a reload; the menu should never
-  // come back open, so start from closed.
-  menuSwitch.checked = false;
-  menuSwitch.addEventListener('change', () => applyMenuState(menuSwitch.checked));
+if (menuOpenBtn) {
+  menuOpenBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    applyMenuState(true);
+  });
+}
+
+if (menuCloseBtn) {
+  menuCloseBtn.addEventListener('click', (event) => {
+    event.preventDefault();
+    applyMenuState(false);
+  });
 }
 
 // Every same-page anchor — nav links, hero CTAs, package "Request this
@@ -4823,6 +5157,7 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
   // no scripting. With scripting they open the contact panel instead, which
   // their own handlers take care of.
   if (link.hasAttribute('data-dock-open') || link.classList.contains('dock-toggle')) return;
+  if (link.classList.contains('menu-toggle') || link.classList.contains('ticker-word')) return;
 
   link.addEventListener('click', (event) => {
     event.preventDefault();
@@ -4953,43 +5288,35 @@ document.querySelectorAll('a[href^="#"]').forEach((link) => {
   }, true);
 })();
 
-serviceCards.forEach((card) => {
-  const button = card.querySelector('.service-toggle');
-  const plus = card.querySelector('.service-plus');
-
-  button.addEventListener('click', () => {
-    const isOpen = card.classList.toggle('open');
-    button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    plus.textContent = isOpen ? '\u2212' : '+';
-  });
-});
+// The service cards are <details> elements now, so opening and closing
+// them, the keyboard handling and the expanded state are the browser's job.
+// The "+" turning into "-" is done in CSS off the [open] attribute.
 
 // Drag-to-compare "proof of thinking" widget.
 const compareEl = document.querySelector('.compare');
 if (compareEl) {
   const range = compareEl.querySelector('.compare-range');
-  const setPos = (value) => compareEl.style.setProperty('--pos', `${value}%`);
-  range.addEventListener('input', (event) => setPos(event.target.value));
-  setPos(range.value);
+  const views = document.querySelectorAll('input[name="compare-view"]');
+  const splitView = document.getElementById('cmp-split');
 
-  // The "Claim offer" pill is illustrative (part of the mock ad, not a real
-  // offer) but it should still feel alive rather than dead when tapped.
-  // This toggles immediately and deterministically on every click — an
-  // earlier version auto-reverted after a timeout instead, which meant
-  // clicking again while it was still showing "Claimed" just restarted the
-  // same timer with no visible change, reading as the button lagging or
-  // being stuck rather than responding.
-  const mockCta = compareEl.querySelector('.mock-cta');
-  if (mockCta) {
-    const originalLabel = mockCta.textContent;
+  // Dragging is the precise control; the three buttons are the quick one, and
+  // CSS drives those so they work with no scripting. Dragging writes --pos
+  // inline, which outranks those rules, so picking a button clears it again.
+  range.addEventListener('input', (event) => {
+    compareEl.style.setProperty('--pos', `${event.target.value}%`);
+    if (splitView) splitView.checked = true;
+  });
 
-    mockCta.addEventListener('click', (event) => {
-      event.stopPropagation();
-      const isClaimed = mockCta.classList.toggle('claimed');
-      mockCta.textContent = isClaimed ? '\u2713 Claimed' : originalLabel;
+  views.forEach((view) => {
+    view.addEventListener('change', () => {
+      compareEl.style.removeProperty('--pos');
+      range.value = view.id === 'cmp-before' ? 100 : view.id === 'cmp-after' ? 0 : 56;
     });
-  }
+  });
 }
+
+// The mock "Claim offer" pill is a checkbox and a label now, so its two
+// states are pure CSS.
 
 /**
  * Lead capture form.
@@ -5008,41 +5335,12 @@ if (compareEl) {
  * to opening a pre-filled email instead of submitting directly, so nothing
  * is broken by leaving this unconfigured.
  */
-// "What happens next" chips in the contact card. Each tap reveals one line
-// of reassurance detail in a shared panel; tapping the open chip closes it.
-const stepDetailCopy = {
-  1: 'A link is enough — Instagram, Facebook, TikTok, or your website. No brief needed.',
-  2: "One clear page: the campaign message, who it's for, and the first content ideas we'd run.",
-  3: 'The concept is yours to keep either way. If it clicks, we talk scope.',
-};
+// The "what happens next" chips are radio buttons with labels now, so CSS
+// reveals each note on its own with no scripting involved.
 
-const stepButtons = document.querySelectorAll('.next-step');
-const stepPanel = document.querySelector('.next-step-detail');
-const stepPanelText = stepPanel ? stepPanel.querySelector('p') : null;
-let openStepId = null;
-
-stepButtons.forEach((button) => {
-  button.addEventListener('click', () => {
-    const stepId = button.dataset.step;
-    const closing = openStepId === stepId;
-    openStepId = closing ? null : stepId;
-
-    stepButtons.forEach((b) => {
-      const isOpen = !closing && b.dataset.step === stepId;
-      b.classList.toggle('active', isOpen);
-      b.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    });
-
-    if (closing) {
-      stepPanel.classList.remove('open');
-    } else {
-      stepPanelText.textContent = stepDetailCopy[stepId];
-      stepPanel.classList.add('open');
-    }
-  });
-});
-
-const FORMSPREE_ENDPOINT = 'https://formspree.io/f/YOUR_FORM_ID';
+// Read from the form's own action attribute, so the endpoint is set in one
+// place and the form also posts natively when no script is running.
+const FORMSPREE_ENDPOINT = (document.getElementById('concept-form') || {}).action || '';
 
 const conceptForm = document.getElementById('concept-form');
 if (conceptForm) {
@@ -5052,8 +5350,6 @@ if (conceptForm) {
   const sendWa = conceptForm.querySelector('.send-wa');
   const sendMail = conceptForm.querySelector('.send-mail');
   const successEl = document.querySelector('.form-success');
-  const topicsInput = conceptForm.querySelector('input[name="topics"]');
-  const replyOpts = [...conceptForm.querySelectorAll('.reply-opt')];
   const isConfigured = !FORMSPREE_ENDPOINT.includes('YOUR_FORM_ID');
 
   const setStatus = (text, isError = false) => {
@@ -5063,28 +5359,10 @@ if (conceptForm) {
 
   const hideSendChoice = () => { sendChoice.hidden = true; };
 
-  const syncReplyChips = () => {
-    replyOpts.forEach((opt) => opt.classList.toggle('checked', opt.querySelector('input').checked));
-  };
-
-  // "Promoting" chips — multi-select, mirrored into a hidden field so the
-  // choice travels with the submission.
-  conceptForm.querySelectorAll('.topic-chip').forEach((chip) => {
-    chip.addEventListener('click', () => {
-      const on = chip.classList.toggle('selected');
-      chip.setAttribute('aria-pressed', on ? 'true' : 'false');
-      topicsInput.value = [...conceptForm.querySelectorAll('.topic-chip.selected')]
-        .map((c) => c.dataset.topic)
-        .join(', ');
-      hideSendChoice();
-    });
-  });
-
-  // "Reply via" radios styled as chips. The .checked class is toggled here
-  // rather than via :has(), which some older mobile browsers still lack.
-  replyOpts.forEach((opt) => {
-    opt.querySelector('input').addEventListener('change', () => {
-      syncReplyChips();
+  // The chips are real checkboxes and radios, so ticking them and sending
+  // their values is the browser's job. This only clears a stale error.
+  conceptForm.querySelectorAll('.switch-input').forEach((box) => {
+    box.addEventListener('change', () => {
       conceptForm.querySelector('#cf-phone').classList.remove('invalid');
       hideSendChoice();
     });
@@ -5107,7 +5385,7 @@ if (conceptForm) {
       business: v('business'),
       phone: v('phone'),
       link: v('link'),
-      topics: v('topics'),
+      topics: data.getAll('topics').join(', '),
       interest: v('interest'),
       message: v('message'),
       reply: v('reply') || 'WhatsApp',
@@ -5150,13 +5428,7 @@ if (conceptForm) {
 
   function resetForm() {
     conceptForm.reset();
-    conceptForm.querySelectorAll('.topic-chip').forEach((chip) => {
-      chip.classList.remove('selected');
-      chip.setAttribute('aria-pressed', 'false');
-    });
     conceptForm.querySelectorAll('.invalid').forEach((el) => el.classList.remove('invalid'));
-    topicsInput.value = '';
-    syncReplyChips();
     setStatus('');
     hideSendChoice();
   }
@@ -5572,70 +5844,25 @@ function prefillInterest(name) {
 
 (function initFinder() {
   const finder = document.getElementById('finder');
-  if (!finder) return;
+  const cta = finder ? finder.querySelector('.finder-cta') : null;
+  if (!finder || !cta) return;
 
-  const questions = [...finder.querySelectorAll('.finder-q')];
-  const result = finder.querySelector('.finder-result');
-  const resultTitle = result.querySelector('h4');
-  const resultWhy = result.querySelector('.finder-why');
-  const cta = result.querySelector('.finder-cta');
-  const reset = result.querySelector('.finder-reset');
-  const cards = [...document.querySelectorAll('.package-card')];
-  const answers = {};
-
-  const PACKAGES = {
-    test: {
-      card: 0,
-      name: 'Starter Campaign',
-      why: 'One focused concept with content direction, a set of posts and a few ad angles — enough to see whether the idea gets a response before you commit further.',
-    },
-    visible: {
-      card: 1,
-      name: 'Growth Campaign',
-      why: 'Monthly planning, social content and ad direction so your business shows up consistently instead of in bursts.',
-    },
-    support: {
-      card: 2,
-      name: 'Full Support',
-      why: 'Ongoing concepts, content, landing-page messaging and reporting — a long-term creative partner rather than a one-off project.',
-    },
+  const PACKAGE_FOR = {
+    'fg-test': 'Starter Campaign',
+    'fg-visible': 'Growth Campaign',
+    'fg-support': 'Full Support',
   };
-  const ADDON_NOTE = ' We’d add Lead Response Systems too, so the enquiries your ads bring in actually get answered.';
 
-  function showResult() {
-    const pkg = PACKAGES[answers.goal];
-    const addon = answers.leads === 'slow';
-    const name = pkg.name + (addon ? ' + Lead Response Systems' : '');
-    resultTitle.textContent = name;
-    resultWhy.textContent = pkg.why + (addon ? ADDON_NOTE : '');
-    cards.forEach((card, i) => card.classList.toggle('suggested', i === pkg.card));
-    result.hidden = false;
-    requestAnimationFrame(() => result.classList.add('show'));
-    cta.onclick = () => {
-      prefillInterest(name);
-      scrollToId('contact');
-    };
-  }
-
-  questions.forEach((q, qi) => {
-    q.querySelectorAll('button').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        q.querySelectorAll('button').forEach((b) => b.classList.toggle('selected', b === btn));
-        answers[q.dataset.q] = btn.dataset.value;
-        if (questions[qi + 1]) questions[qi + 1].classList.add('unlocked');
-        if (answers.goal && answers.leads) showResult();
-      });
-    });
-  });
-
-  reset.addEventListener('click', () => {
-    Object.keys(answers).forEach((key) => delete answers[key]);
-    finder.querySelectorAll('.finder-options button').forEach((b) => b.classList.remove('selected'));
-    questions.forEach((q, i) => q.classList.toggle('unlocked', i === 0));
-    cards.forEach((card) => card.classList.remove('suggested'));
-    result.classList.remove('show');
-    result.hidden = true;
-    questions[0].querySelector('button').focus();
+  // Revealing the recommendation, highlighting the matching package card and
+  // "Start over" are all handled by CSS and a native reset button, so they
+  // work with no scripting. This only carries the choice into the request
+  // form; the link's own href does the scrolling.
+  cta.addEventListener('click', () => {
+    const goal = finder.querySelector('input[name="f-goal"]:checked');
+    if (!goal) return;
+    const leads = finder.querySelector('input[name="f-leads"]:checked');
+    const addon = leads && leads.id === 'fl-slow';
+    prefillInterest(PACKAGE_FOR[goal.id] + (addon ? ' + Lead Response Systems' : ''));
   });
 })();
 
@@ -5910,7 +6137,7 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     lastTarget = target;
 
     const overField = target.closest('input, textarea, select, .compare');
-    const overClickable = !overField && target.closest('a, button, [role="button"], label, .nav-shell, .ticker-track span');
+    const overClickable = !overField && target.closest('a, button, [role="button"], label, summary, .nav-shell');
     ring.classList.toggle('hide', Boolean(overField));
     ring.classList.toggle('hot', Boolean(overClickable));
 
@@ -5963,21 +6190,8 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
 
 /* ============ TICKER: each word opens its service ============ */
 (function initTickerLinks() {
-  const words = document.querySelectorAll('.ticker-track span[data-service]');
+  const words = document.querySelectorAll('.ticker-word');
   if (!words.length) return;
-
-  function openService(index) {
-    const card = serviceCards[index];
-    if (!card) return;
-    const button = card.querySelector('.service-toggle');
-    const plus = card.querySelector('.service-plus');
-    card.classList.add('open');
-    button.setAttribute('aria-expanded', 'true');
-    plus.textContent = '−';
-    card.classList.remove('flash');
-    void card.offsetWidth;
-    card.classList.add('flash');
-  }
 
   // Freeze the marquee while a finger (or mouse button) is down on it, so a
   // tap lands on the word that was under the finger when it went down.
@@ -5998,12 +6212,18 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     tickerSection.addEventListener('pointerleave', thaw, { passive: true });
   }
 
+  // Each word links to #services, which is what happens with no scripting.
+  // With scripting it goes further and opens the matching card.
   words.forEach((word) => {
-    word.addEventListener('click', () => {
-      const index = parseInt(word.dataset.service, 10) - 1;
-      const card = serviceCards[index];
-      openService(index);
-      if (!card) { scrollToId('services'); return; }
+    word.addEventListener('click', (event) => {
+      const card = serviceCards[parseInt(word.dataset.service, 10) - 1];
+      if (!card) return;
+      event.preventDefault();
+      card.open = true;
+      card.classList.remove('flash');
+      void card.offsetWidth;
+      card.classList.add('flash');
+
       const targetY = Math.max(0, card.getBoundingClientRect().top + window.scrollY - 120);
       isNavigatingViaClick = true;
       setActiveNav('services');
