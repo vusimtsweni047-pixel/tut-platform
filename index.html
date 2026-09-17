@@ -2623,6 +2623,14 @@ h1 {
 }
 
 /* ============ FLOATING CONTACT DOCK ============ */
+/* The dock is a flex column, so the container is as big as its tallest
+   child — the panel. A hidden panel still takes up layout (visibility,
+   not display), which made this an invisible ~320x380 box pinned over the
+   bottom of the viewport: 37% of a phone screen, swallowing every tap
+   that landed in it while scrolling still worked, because dragging a
+   non-scrollable fixed element still scrolls the page. The container must
+   therefore never take pointer events; only the parts you can actually
+   see turn them back on. */
 .dock {
   position: fixed;
   right: 20px;
@@ -2632,7 +2640,13 @@ h1 {
   flex-direction: column;
   align-items: flex-end;
   gap: 12px;
+  pointer-events: none;
   transition: transform 0.45s var(--ease), opacity 0.3s ease;
+}
+
+.dock-toggle,
+.dock-nudge {
+  pointer-events: auto;
 }
 
 .dock.is-hidden {
@@ -3276,6 +3290,11 @@ h1 {
 }
 
 .ticker-track span:hover { color: var(--blue); }
+
+/* The marquee never stops on a phone (there is no hover), so a word was a
+   moving target you had to chase. A finger down freezes it, which makes
+   the tap land where you aimed; it resumes shortly after you lift. */
+.ticker-section.touch-paused .ticker-track { animation-play-state: paused; }
 
 .service-card.flash {
   animation: card-flash 1.4s ease;
@@ -5236,14 +5255,15 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   const nudgeClose = dock.querySelector('.dock-nudge-close');
   const NUDGE_KEY = 'brandlift-nudge';
   let isOpen = false;
-  let railInView = false;
+  let inContactZone = false;
   let nudgeDone = false;
   try { nudgeDone = sessionStorage.getItem(NUDGE_KEY) === '1'; } catch (err) { /* storage blocked */ }
 
-  // Slides out of the way while the contact section's own channel cards
-  // are on screen — no point offering the same links twice.
+  // Slides out of the way while the contact section's own channel cards or
+  // the footer's contact column are on screen — no point offering the same
+  // links twice, and over the footer the button sat on top of "Back to top".
   function syncHidden() {
-    dock.classList.toggle('is-hidden', railInView && !isOpen);
+    dock.classList.toggle('is-hidden', inContactZone && !isOpen);
   }
 
   function hideNudge() {
@@ -5253,7 +5273,7 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   }
 
   function showNudge() {
-    if (nudgeDone || isOpen || railInView) return;
+    if (nudgeDone || isOpen || inContactZone) return;
     nudgeDone = true;
     try { sessionStorage.setItem(NUDGE_KEY, '1'); } catch (err) { /* storage blocked */ }
     nudge.hidden = false;
@@ -5301,12 +5321,18 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
 
   nudgeClose.addEventListener('click', hideNudge);
 
-  const rail = document.querySelector('.contact-rail');
-  if (rail && 'IntersectionObserver' in window) {
-    new IntersectionObserver(([entry]) => {
-      railInView = entry.isIntersecting;
+  const hideZones = [document.querySelector('.contact-rail'), document.querySelector('.footer')].filter(Boolean);
+  if (hideZones.length && 'IntersectionObserver' in window) {
+    const showing = new Set();
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) showing.add(entry.target);
+        else showing.delete(entry.target);
+      });
+      inContactZone = showing.size > 0;
       syncHidden();
-    }, { threshold: 0.4 }).observe(rail);
+    }, { threshold: 0.4 });
+    hideZones.forEach((el) => observer.observe(el));
   }
 
   // One gentle nudge per session: after a little time on the page, or once
@@ -5537,6 +5563,25 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     card.classList.remove('flash');
     void card.offsetWidth;
     card.classList.add('flash');
+  }
+
+  // Freeze the marquee while a finger (or mouse button) is down on it, so a
+  // tap lands on the word that was under the finger when it went down.
+  const tickerSection = document.querySelector('.ticker-section');
+  if (tickerSection) {
+    let resumeTimer = null;
+    const freeze = () => {
+      clearTimeout(resumeTimer);
+      tickerSection.classList.add('touch-paused');
+    };
+    const thaw = () => {
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => tickerSection.classList.remove('touch-paused'), 450);
+    };
+    tickerSection.addEventListener('pointerdown', freeze, { passive: true });
+    tickerSection.addEventListener('pointerup', thaw, { passive: true });
+    tickerSection.addEventListener('pointercancel', thaw, { passive: true });
+    tickerSection.addEventListener('pointerleave', thaw, { passive: true });
   }
 
   words.forEach((word) => {
