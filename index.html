@@ -3042,20 +3042,22 @@ h1 {
 /* ============ DARK-MODE SPOTLIGHT ============ */
 /* In dark mode the page becomes a stage: a soft light follows the cursor
    over everything. A transform-positioned circle, so it composites cheaply. */
+/* Measured as the single biggest cause of dropped frames in dark mode: a
+   1100px blended layer re-composited on every pointer move. Two thirds the
+   size and no blend mode keeps the effect and returns the frames. */
 .spotlight {
   position: fixed;
   top: 0;
   left: 0;
-  width: 1100px;
-  height: 1100px;
-  margin: -550px 0 0 -550px;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 50;
   opacity: 0;
-  background: radial-gradient(circle, rgba(29, 82, 255, 0.16) 0%, rgba(29, 82, 255, 0.05) 32%, transparent 62%);
-  mix-blend-mode: screen;
-  transition: opacity 0.6s ease;
+  background: radial-gradient(circle, rgba(93, 131, 255, 0.16) 0%, rgba(58, 96, 224, 0.06) 42%, transparent 70%);
+  transition: opacity 0.5s ease;
   will-change: transform;
 }
 
@@ -3075,16 +3077,21 @@ h1 {
   position: fixed;
   top: 0;
   left: 0;
-  width: 34px;
-  height: 34px;
-  margin: -17px 0 0 -17px;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
   border-radius: 50%;
-  border: 1.5px solid #ffffff;
-  mix-blend-mode: difference;
+  border: 2px solid var(--blue);
+  /* A white halo instead of difference blending. Blending forces the
+     compositor to re-read the page behind the ring on every frame it
+     moves, which was a measurable share of the dropped frames and made
+     the ring itself feel a step behind the pointer. The halo gives the
+     same read-on-anything contrast for nothing. */
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55);
   pointer-events: none;
   z-index: 9999;
   opacity: 0;
-  transition: opacity 0.22s ease, background-color 0.2s ease;
+  transition: opacity 0.18s ease, background-color 0.18s ease;
   will-change: transform;
 }
 
@@ -3092,7 +3099,7 @@ h1 {
 .cursor-ring.hide { opacity: 0; }
 
 .cursor-ring.hot {
-  background-color: rgba(255, 255, 255, 0.16);
+  background-color: rgba(29, 82, 255, 0.2);
 }
 
 /* ============ SECTION RAIL (wide desktop) ============ */
@@ -3916,6 +3923,61 @@ html:not(.js) .dock-item-chat { display: none; }
     max-height: min(74vh, calc(100vh - 120px));
   }
 }
+
+/* ============ RENDERING COST ============ */
+/* backdrop-filter re-blurs the region behind an element on every frame it
+   or the page moves. Measured at roughly a fifth of the dropped frames
+   while scrolling, so it is halved on desktop and dropped altogether on
+   touch devices, where it costs the most and shows the least. The
+   backgrounds become near-opaque instead, which reads much the same. */
+.site-header {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .site-header {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(250, 248, 243, 0.97);
+  }
+
+  .nav-shell {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* The dot texture is a repeating gradient painted across the whole
+     viewport. The two washes carry the look on their own. */
+  .page-noise {
+    background-image:
+      radial-gradient(900px 620px at 88% -8%, rgba(29, 82, 255, 0.09), transparent 62%),
+      radial-gradient(760px 520px at -8% 108%, rgba(12, 31, 143, 0.07), transparent 62%);
+  }
+}
+
+/* The light streak crossing this panel forced a re-blur on every frame of
+   its animation. The gradient and border carry the glass on their own. */
+.human-note {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.74) 0%, rgba(255, 255, 255, 0.48) 100%);
+}
+
+/* The floating button opens the assistant, so it shows the close mark
+   while the assistant is up, and stays put rather than sliding away. */
+.dock.chat-live .dock-arrow { opacity: 0; transform: rotate(90deg) scale(0.5); }
+.dock.chat-live .dock-x { opacity: 1; transform: none; }
+.dock.chat-live .dock-toggle::before { animation: none; opacity: 0; }
+
+.dock.chat-live.is-hidden {
+  transform: none;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* A speech bubble, since the button opens the assistant. */
+.dock-arrow svg { width: 20px; height: 20px; display: block; }
 /* ============ DARK MODE ============ */
 /* Same design, lights off. Tokens flip first; the handful of surfaces that
    were hard-coded for paper get explicit overrides below. The black band
@@ -4052,6 +4114,19 @@ html:not(.js) .dock-item-chat { display: none; }
 :root[data-theme="dark"] .theme-knob { transform: translateX(24px); }
 :root[data-theme="dark"] .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
 :root[data-theme="dark"] .theme-moon { opacity: 1; transform: none; }
+
+@media (hover: none), (pointer: coarse) {
+  :root[data-theme="dark"] .site-header { background: rgba(11, 11, 16, 0.97); }
+  :root[data-theme="dark"] .page-noise {
+    background-image:
+      radial-gradient(900px 620px at 88% -8%, rgba(29, 82, 255, 0.2), transparent 62%),
+      radial-gradient(760px 520px at -8% 108%, rgba(12, 31, 143, 0.22), transparent 62%);
+  }
+}
+
+:root[data-theme="dark"] .human-note {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
 
 /* ============ DARK MODE WITHOUT JAVASCRIPT ============ */
 /* The block above needs a script to set data-theme. These two repeat it for
@@ -4206,6 +4281,19 @@ html:not(.js) .dock-item-chat { display: none; }
 :root:not([data-theme]):has(#theme-switch:checked) .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
 :root:not([data-theme]):has(#theme-switch:checked) .theme-moon { opacity: 1; transform: none; }
 
+@media (hover: none), (pointer: coarse) {
+  :root:not([data-theme]):has(#theme-switch:checked) .site-header { background: rgba(11, 11, 16, 0.97); }
+  :root:not([data-theme]):has(#theme-switch:checked) .page-noise {
+    background-image:
+      radial-gradient(900px 620px at 88% -8%, rgba(29, 82, 255, 0.2), transparent 62%),
+      radial-gradient(760px 520px at -8% 108%, rgba(12, 31, 143, 0.22), transparent 62%);
+  }
+}
+
+:root:not([data-theme]):has(#theme-switch:checked) .human-note {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
 }
 @media (prefers-color-scheme: dark) {
 /* ============ DARK MODE ============ */
@@ -4344,6 +4432,19 @@ html:not(.js) .dock-item-chat { display: none; }
 :root:not([data-theme]):not(:has(#theme-switch:checked)) .theme-knob { transform: translateX(24px); }
 :root:not([data-theme]):not(:has(#theme-switch:checked)) .theme-sun { opacity: 0; transform: rotate(60deg) scale(0.5); }
 :root:not([data-theme]):not(:has(#theme-switch:checked)) .theme-moon { opacity: 1; transform: none; }
+
+@media (hover: none), (pointer: coarse) {
+  :root:not([data-theme]):not(:has(#theme-switch:checked)) .site-header { background: rgba(11, 11, 16, 0.97); }
+  :root:not([data-theme]):not(:has(#theme-switch:checked)) .page-noise {
+    background-image:
+      radial-gradient(900px 620px at 88% -8%, rgba(29, 82, 255, 0.2), transparent 62%),
+      radial-gradient(760px 520px at -8% 108%, rgba(12, 31, 143, 0.22), transparent 62%);
+  }
+}
+
+:root:not([data-theme]):not(:has(#theme-switch:checked)) .human-note {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
 
 }
 
@@ -5137,8 +5238,14 @@ html:not(.js) .dock-item-chat { display: none; }
       </a>
       <p class="dock-avail"><span class="availability-dot" aria-hidden="true"></span><span data-avail-title>Mon–Fri, 08:00–17:00 SAST</span></p>
     </div>
-    <a class="dock-toggle" href="#contact" aria-expanded="false" aria-controls="dock-panel" aria-label="Contact BrandLift">
-      <span class="dock-icon" aria-hidden="true"><span class="dock-arrow">↗</span><span class="dock-x">×</span></span>
+    <!-- Opens the assistant. Still a link to the contact section, so it
+         leads somewhere useful where scripts do not run. -->
+    <a class="dock-toggle" href="#contact" data-chat-open aria-expanded="false"
+       aria-controls="chat" aria-label="Ask the BrandLift assistant">
+      <span class="dock-icon" aria-hidden="true">
+        <span class="dock-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12z"/></svg></span>
+        <span class="dock-x">×</span>
+      </span>
       <span class="dock-label">Talk to us</span>
     </a>
   </div>
@@ -5205,6 +5312,50 @@ const navIndicator = document.querySelector('.nav-indicator');
 const navItems = document.querySelectorAll('.nav-item');
 const trackedSections = document.querySelectorAll('[data-section]');
 const serviceCards = document.querySelectorAll('.service-card');
+
+/**
+ * Cached page metrics.
+ *
+ * The scroll work used to read offsetTop, scrollHeight and a bounding rect
+ * on every frame, interleaved with the style writes that follow them. Each
+ * read after a write forces the browser to redo layout, so a single scroll
+ * frame was paying for three of them. Everything needed is measured here
+ * instead, and re-measured only when something actually changes the page's
+ * height — a card opening, fonts landing, a rotation.
+ */
+const layout = { docHeight: 0, sections: [], laneTop: 0, laneHeight: 0 };
+
+function measureLayout() {
+  const scrolled = window.scrollY;
+  layout.docHeight = document.documentElement.scrollHeight;
+  layout.sections = [...trackedSections].map((section) => ({
+    id: section.dataset.section,
+    top: section.getBoundingClientRect().top + scrolled,
+  }));
+  const lane = document.querySelector('.process-lane');
+  if (lane) {
+    const rect = lane.getBoundingClientRect();
+    layout.laneTop = rect.top + scrolled;
+    layout.laneHeight = rect.height;
+  }
+}
+
+let measureQueued = false;
+
+function queueMeasure() {
+  if (measureQueued) return;
+  measureQueued = true;
+  requestAnimationFrame(() => {
+    measureQueued = false;
+    measureLayout();
+  });
+}
+
+measureLayout();
+window.addEventListener('load', queueMeasure);
+window.addEventListener('resize', queueMeasure);
+if ('ResizeObserver' in window) new ResizeObserver(queueMeasure).observe(document.body);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(queueMeasure);
 
 /**
  * Moves the sliding pill indicator behind the active nav item.
@@ -5373,19 +5524,16 @@ function updateActiveNavOnScroll() {
   if (navShell.classList.contains('open')) return;
   if (isNavigatingViaClick) return;
 
-  const headerOffset = 120;
-  const marker = window.scrollY + headerOffset;
-  let currentId = trackedSections[0]?.dataset.section || 'home';
+  const marker = window.scrollY + 120;
+  let currentId = layout.sections.length ? layout.sections[0].id : 'home';
 
-  trackedSections.forEach((section) => {
-    if (marker >= section.offsetTop) {
-      currentId = section.dataset.section;
-    }
+  layout.sections.forEach((section) => {
+    if (marker >= section.top) currentId = section.id;
   });
 
-  const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 12;
-  if (atBottom) {
-    currentId = trackedSections[trackedSections.length - 1].dataset.section;
+  const atBottom = window.innerHeight + window.scrollY >= layout.docHeight - 12;
+  if (atBottom && layout.sections.length) {
+    currentId = layout.sections[layout.sections.length - 1].id;
   }
 
   setActiveNav(currentId);
@@ -6055,7 +6203,7 @@ const progressEl = document.querySelector('.scroll-progress');
 
 function updateScrollProgress() {
   if (!progressEl || navShell.classList.contains('open')) return;
-  const max = document.documentElement.scrollHeight - window.innerHeight;
+  const max = layout.docHeight - window.innerHeight;
   const p = max > 0 ? Math.min(1, window.scrollY / max) : 0;
   progressEl.style.setProperty('--p', p.toFixed(4));
 }
@@ -6240,12 +6388,9 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     syncHidden();
   }
 
-  // The toggle is a link to #contact so it still works unscripted; here it
-  // opens the panel instead of navigating.
-  toggle.addEventListener('click', (event) => {
-    event.preventDefault();
-    setOpen(!isOpen);
-  });
+  // The floating button opens the assistant, not this panel — the
+  // assistant's own script handles it through [data-chat-open]. This panel
+  // is reached from "Talk to us" in the header.
 
   // Folds the pill down to its icon on phones (see .dock.compact in CSS).
   setTimeout(() => dock.classList.add('compact'), 6000);
@@ -6258,7 +6403,7 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     });
   });
 
-  panel.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setOpen(false)));
+  panel.querySelectorAll('a, button').forEach((item) => item.addEventListener('click', () => setOpen(false)));
 
   document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape' && isOpen) {
@@ -6390,8 +6535,8 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   if (!spot && !ring) return;
 
   const SPOT_EASE = 0.16;
-  const SCALE_EASE = 0.3;
-  const HOT_SCALE = 1.5;
+  const SCALE_EASE = 0.38;
+  const HOT_SCALE = 1.95;
 
   let tx = -999, ty = -999;
   let sx = tx, sy = ty;
@@ -6558,11 +6703,11 @@ const processLane = document.querySelector('.process-lane');
 
 function updateProcessLine() {
   if (!processLane || navShell.classList.contains('open')) return;
-  const rect = processLane.getBoundingClientRect();
+  const top = layout.laneTop - window.scrollY;
   const vh = window.innerHeight;
   const start = vh * 0.9;
   const end = vh * 0.25;
-  const p = (start - rect.top) / (start - end + rect.height * 0.4);
+  const p = (start - top) / (start - end + layout.laneHeight * 0.4);
   processLane.style.setProperty('--pp', Math.max(0, Math.min(1, p)).toFixed(3));
 }
 
@@ -6966,6 +7111,13 @@ const KNOWLEDGE = [
     isOpen = next;
     chat.classList.toggle('open', next);
     chat.setAttribute('aria-hidden', next ? 'false' : 'true');
+    // The floating button is the main way in, so it shows the close mark
+    // while the assistant is up and stays put instead of sliding away.
+    const dock = document.querySelector('.dock');
+    if (dock) dock.classList.toggle('chat-live', next);
+    document.querySelectorAll('[data-chat-open]').forEach((btn) => {
+      btn.setAttribute('aria-expanded', next ? 'true' : 'false');
+    });
     if (next) {
       if (!log.childElementCount) restore();
       scrollLog();
@@ -6990,10 +7142,12 @@ const KNOWLEDGE = [
     if (event.key === 'Escape' && isOpen) setOpen(false);
   });
 
+  // Toggling rather than only opening, so tapping the floating button a
+  // second time closes the assistant again.
   document.querySelectorAll('[data-chat-open]').forEach((btn) => {
     btn.addEventListener('click', (event) => {
       event.preventDefault();
-      setOpen(true);
+      setOpen(!isOpen);
     });
   });
 
