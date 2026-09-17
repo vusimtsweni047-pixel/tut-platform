@@ -3638,6 +3638,284 @@ html:not(.js) .channel-copy { display: none; }
     background: linear-gradient(160deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.88) 100%);
   }
 }
+
+/* ============ ASSISTANT ============ */
+/* Needs scripting, so its entry point is hidden when there is none rather
+   than sitting in the dock doing nothing. */
+html:not(.js) .dock-item-chat { display: none; }
+
+.channel-icon-chat { background: var(--grad-brand); color: var(--white); }
+.dock-item-chat { border: 0; text-align: left; font: inherit; cursor: pointer; width: 100%; }
+
+.chat {
+  position: fixed;
+  right: 20px;
+  bottom: 92px;
+  z-index: 58;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 40px));
+  max-height: min(560px, calc(100vh - 140px));
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: 0 28px 70px rgba(11, 11, 16, 0.22);
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(14px) scale(0.97);
+  transform-origin: bottom right;
+  transition: opacity 0.25s ease, transform 0.35s var(--ease), visibility 0s linear 0.35s;
+}
+
+.chat.open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.25s ease, transform 0.35s var(--ease), visibility 0s;
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(135deg, rgba(29, 82, 255, 0.1), transparent);
+}
+
+.chat-avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--grad-brand);
+  color: var(--white);
+  font-weight: 800;
+}
+
+.chat-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-title strong {
+  display: block;
+  font-size: 0.98rem;
+  letter-spacing: -0.01em;
+}
+
+.chat-title small {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.chat-close {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.chat-close:hover { background: var(--paper); color: var(--ink); }
+
+.chat-log {
+  flex: 1;
+  min-height: 140px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-msg {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 88%;
+  animation: chat-in 0.3s var(--ease);
+}
+
+.chat-you {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+@keyframes chat-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.chat-bubble {
+  margin: 0;
+  padding: 11px 14px;
+  border-radius: 16px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.chat-bot .chat-bubble {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 5px;
+  color: var(--ink);
+}
+
+.chat-you .chat-bubble {
+  background: var(--grad-brand);
+  border-bottom-right-radius: 5px;
+  color: var(--white);
+}
+
+.chat-action {
+  align-self: flex-start;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--blue);
+  background: var(--blue-tint);
+  color: var(--blue);
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.chat-action:hover {
+  background: var(--blue);
+  color: var(--white);
+  transform: translateY(-1px);
+}
+
+.chat-typing .chat-bubble {
+  display: inline-flex;
+  gap: 4px;
+  padding: 14px;
+}
+
+.chat-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  animation: chat-dot 1.1s ease-in-out infinite;
+}
+
+.chat-typing span:nth-child(2) { animation-delay: 0.15s; }
+.chat-typing span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes chat-dot {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.chat-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 16px 10px;
+}
+
+.chat-chips:empty { display: none; }
+
+.chat-chip {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s var(--ease);
+}
+
+.chat-chip:hover { border-color: var(--blue); transform: translateY(-1px); }
+
+.chat-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.chat-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+}
+
+.chat-form input:focus {
+  outline: none;
+  border-color: var(--blue);
+}
+
+.chat-send {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--grad-brand);
+  color: var(--white);
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), box-shadow 0.2s ease;
+}
+
+.chat-send:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(29, 82, 255, 0.3); }
+.chat-send svg { width: 19px; height: 19px; }
+
+.chat-foot {
+  margin: 0;
+  padding: 0 16px 12px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.chat-foot a {
+  color: var(--blue);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+:root[data-theme="dark"] .chat { box-shadow: 0 28px 70px rgba(0, 0, 0, 0.6); }
+:root[data-theme="dark"] .chat-bot .chat-bubble { background: rgba(255, 255, 255, 0.05); }
+
+@media (max-width: 620px) {
+  .chat {
+    right: 12px;
+    left: 12px;
+    bottom: 84px;
+    width: auto;
+    max-height: min(74vh, calc(100vh - 120px));
+  }
+}
 /* ============ DARK MODE ============ */
 /* Same design, lights off. Tokens flip first; the handful of surfaces that
    were hard-coded for paper get explicit overrides below. The black band
@@ -4829,6 +5107,14 @@ html:not(.js) .channel-copy { display: none; }
     </div>
     <div class="dock-panel" id="dock-panel" aria-hidden="true">
       <p class="dock-title">Reach BrandLift</p>
+      <!-- Hidden when scripts are unavailable, since the assistant needs them. -->
+      <button type="button" class="dock-item dock-item-chat" data-chat-open>
+        <span class="channel-icon channel-icon-chat" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-5A8 8 0 1 1 21 12z"/></svg>
+        </span>
+        <span><strong>Ask a question</strong><small>Answered right away</small></span>
+        <span class="channel-arrow" aria-hidden="true">↗</span>
+      </button>
       <a class="dock-item" data-channel="whatsapp" href="https://wa.me/27000000000?text=Hi%20BrandLift%2C%20I%27d%20like%20a%20campaign%20concept%20for%20my%20business." target="_blank" rel="noopener">
         <span class="channel-icon channel-icon-wa"><svg aria-hidden="true"><use href="#i-wa"/></svg></span>
         <span><strong>WhatsApp</strong><small>Fastest reply</small></span>
@@ -4856,6 +5142,39 @@ html:not(.js) .channel-copy { display: none; }
       <span class="dock-label">Talk to us</span>
     </a>
   </div>
+
+  <!-- The assistant. Answers come from the knowledge base in the script
+       below, so it costs nothing, needs no account and replies instantly.
+       Anything it cannot answer is handed to a human on WhatsApp with the
+       conversation attached. See ASSISTANT in the script to connect a real
+       language model later. -->
+  <section class="chat" id="chat" aria-label="BrandLift assistant" aria-hidden="true">
+    <header class="chat-head">
+      <span class="chat-avatar" aria-hidden="true">↗</span>
+      <div class="chat-title">
+        <strong>BrandLift Assistant</strong>
+        <small>Instant answers · any time of day</small>
+      </div>
+      <button type="button" class="chat-close" aria-label="Close the assistant">×</button>
+    </header>
+
+    <div class="chat-log" role="log" aria-live="polite" aria-label="Conversation"></div>
+
+    <div class="chat-chips" role="group" aria-label="Suggested questions"></div>
+
+    <form class="chat-form" autocomplete="off">
+      <label class="sr-only" for="chat-input">Ask a question</label>
+      <input type="text" id="chat-input" name="q" placeholder="Ask about services, pricing, how we work…" />
+      <button type="submit" class="chat-send" aria-label="Send question">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+      </button>
+    </form>
+
+    <p class="chat-foot">
+      Rather talk to a person?
+      <a data-channel="whatsapp" href="#contact" target="_blank" rel="noopener">WhatsApp us</a>
+    </p>
+  </section>
 
   <script>
 /* ============ CONTACT DETAILS — edit these ============ */
@@ -6249,6 +6568,442 @@ function updateProcessLine() {
 
 updateProcessLine();
 window.addEventListener('resize', updateProcessLine);
+
+
+/* ============ BRANDLIFT ASSISTANT ============ */
+/**
+ * An auto-replying assistant that answers customer questions from the
+ * knowledge base below. It runs entirely in the page: no account, no API
+ * key, no monthly bill, and it replies instantly whether or not anyone is
+ * at the desk. Anything it cannot answer is handed to a human on WhatsApp
+ * with the conversation attached, so no question is lost.
+ *
+ * ── CONNECTING A REAL LANGUAGE MODEL (optional) ────────────────────────
+ * Set ASSISTANT.endpoint below and anything the knowledge base cannot
+ * answer is sent there instead of falling back.
+ *
+ * NEVER put an API key in this file. This page is public, so a key here is
+ * readable by anyone who views the source and can be used to run up your
+ * bill. Put the key in a small proxy you control and point `endpoint` at
+ * the proxy. A free Cloudflare Worker is enough — create one, set your key
+ * as a secret named GEMINI_KEY, and paste this in:
+ *
+ *   export default {
+ *     async fetch(request, env) {
+ *       const cors = { 'Access-Control-Allow-Origin': 'https://brandlift.co.za',
+ *                      'Access-Control-Allow-Headers': 'content-type' };
+ *       if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+ *       const { question } = await request.json();
+ *       const r = await fetch(
+ *         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + env.GEMINI_KEY,
+ *         { method: 'POST', headers: { 'content-type': 'application/json' },
+ *           body: JSON.stringify({
+ *             systemInstruction: { parts: [{ text: 'You answer questions for BrandLift, an AI-assisted ad agency in South Africa. Be brief and concrete: two or three sentences. Never invent prices; say pricing depends on scope and offer a free campaign concept.' }] },
+ *             contents: [{ parts: [{ text: question }] }]
+ *           }) });
+ *       const data = await r.json();
+ *       const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+ *       return new Response(JSON.stringify({ reply }), { headers: { ...cors, 'content-type': 'application/json' } });
+ *     }
+ *   };
+ *
+ * Google's Gemini and Groq both have free tiers that cover a small site.
+ * The endpoint must accept {question} and return {reply}.
+ */
+const ASSISTANT = {
+  endpoint: '',
+  greeting: "Hi! I'm the BrandLift assistant. Ask me about what we do, our packages, pricing, or how to get a free campaign concept.",
+  openers: ['What do you do?', 'What does it cost?', 'Is the concept really free?', 'How does it work?'],
+};
+
+/**
+ * Each entry lists the words that point at it and the answer to give.
+ * Scoring favours longer phrases, so "how much" beats a stray "how".
+ * To teach it something new, add an entry — nothing else needs changing.
+ */
+const KNOWLEDGE = [
+  {
+    id: 'greeting',
+    keys: ['hi', 'hello', 'hey', 'howzit', 'good morning', 'good afternoon', 'good day', 'sawubona', 'molo', 'dumela'],
+    exactOnly: true,
+    reply: "Hi! I'm the BrandLift assistant. What would you like to know?",
+    chips: ['What do you do?', 'What does it cost?', 'Is the concept really free?'],
+  },
+  {
+    id: 'services',
+    keys: ['what do you do', 'what you do', 'services', 'service', 'what is brandlift', 'who are you', 'what do you offer', 'what can you do', 'how can you help', 'help my business'],
+    reply: "BrandLift is an AI-assisted ad agency. We build campaigns that get attention, earn trust and move customers to act — campaign concepts, social content, ad creative direction, landing page messaging, reporting, and lead response systems.",
+    chips: ['Tell me about packages', 'What does it cost?', 'How does it work?'],
+    action: { label: 'See all services', to: 'services' },
+  },
+  {
+    id: 'pricing',
+    keys: ['price', 'prices', 'pricing', 'cost', 'costs', 'how much', 'charge', 'rates', 'quote', 'fees', 'budget', 'expensive', 'affordable'],
+    reply: "Pricing depends on the campaign scope, how much content you need and whether we're supporting ads, so there's no single number. There are three starting points — Starter, Growth and Full Support. Send your website or social page and we'll come back with a concept and a figure.",
+    chips: ['Tell me about packages', 'Is the concept really free?'],
+    action: { label: 'Get a free concept', to: 'contact' },
+  },
+  {
+    id: 'packages',
+    keys: ['package', 'packages', 'plan', 'plans', 'tier', 'starter', 'growth', 'full support', 'options', 'what do i get'],
+    reply: "Three starting points. Starter Campaign: one concept, content direction, 8 posts and 3 ad copy variations — good for testing an idea. Growth Campaign: monthly planning, social content, ad direction and reporting. Full Support: ongoing concepts, content, landing page messaging and reporting.",
+    chips: ['What does it cost?', 'Which one suits me?'],
+    action: { label: 'Compare packages', to: 'packages' },
+  },
+  {
+    id: 'which_package',
+    keys: ['which one', 'which package', 'what suits me', 'recommend', 'suggestion', 'not sure which', 'best for me'],
+    reply: "There are two quick questions on the packages section that point you to the right starting point. Roughly: testing one idea is Starter, showing up every month is Growth, and ongoing creative support is Full Support.",
+    action: { label: 'Answer the two questions', to: 'packages' },
+  },
+  {
+    id: 'free_concept',
+    keys: ['free', 'is it free', 'concept', 'sample', 'trial', 'demo', 'no obligation', 'catch', 'try it'],
+    reply: "The first campaign concept is free, and there's no obligation to continue. Send your website or social page, we review how your business currently shows up, and send back one clear page: the campaign message, who it's for and the first content ideas we'd run.",
+    chips: ['How long does it take?', 'What does it cost after that?'],
+    action: { label: 'Request my free concept', to: 'contact' },
+  },
+  {
+    id: 'process',
+    keys: ['how does it work', 'how do you work', 'process', 'steps', 'what happens', 'get started', 'getting started', 'how do i start', 'next step'],
+    reply: "Four steps. We find the attention gap in how your business shows up, shape the message into a campaign idea people grasp quickly, build the posts, ads and captions, then review what actually got a response and sharpen the rest before the next round.",
+    chips: ['How long does it take?', 'Is the concept really free?'],
+    action: { label: 'See the process', to: 'process' },
+  },
+  {
+    id: 'turnaround',
+    keys: ['how long', 'turnaround', 'how fast', 'how quickly', 'lead time', 'deadline', 'when will', 'time frame', 'timeframe'],
+    reply: "A first concept usually comes back within a few working days. Ongoing campaign work runs on a monthly rhythm: plan, build, review, sharpen. If you're working to a launch date, tell us the date and we'll say honestly whether it's doable.",
+    action: { label: 'Send us your deadline', to: 'contact' },
+  },
+  {
+    id: 'ads',
+    keys: ['run ads', 'run my ads', 'manage ads', 'facebook ads', 'google ads', 'instagram ads', 'tiktok ads', 'paid ads', 'ad spend', 'boost', 'media buying', 'advertising'],
+    reply: "We handle the ad creative direction: what the ad should say, who it speaks to, and the hook that makes someone stop scrolling. We'll give you hooks, copy angles and calls to action. If you also need someone to publish and manage the spend, say so and we'll scope it.",
+    chips: ['What does it cost?'],
+  },
+  {
+    id: 'social',
+    keys: ['social media', 'posts', 'posting', 'instagram', 'facebook', 'tiktok', 'linkedin', 'captions', 'content', 'reels'],
+    reply: "We build content themes rather than random posts, so people understand what you do and why it matters. You get post ideas, captions, themes and creative prompts for Instagram, Facebook, LinkedIn or TikTok.",
+    chips: ['Tell me about packages'],
+  },
+  {
+    id: 'leads',
+    keys: ['lead', 'leads', 'enquiry', 'enquiries', 'inquiry', 'inquiries', 'follow up', 'following up', 'response time', 'missed calls', 'losing customers', 'lead response'],
+    reply: "That's what Lead Response Systems are for. We map the path from click to sale, set response-time standards and give you follow-up templates and a simple lead tracker, so every enquiry gets answered fast and nothing slips through.",
+    chips: ['What does it cost?'],
+    action: { label: 'Add this to a package', to: 'contact' },
+  },
+  {
+    id: 'ai',
+    keys: ['ai', 'artificial intelligence', 'chatgpt', 'robot', 'automated', 'is this a bot', 'are you human', 'real person'],
+    reply: "AI does the heavy lifting on drafts, variations and production speed, which is how the work moves quickly. The thinking stays human: your customer, your offer and your business goal come first. I'm the automated assistant — a person is one message away on WhatsApp whenever you want one.",
+    action: { label: 'Talk to a person', to: 'whatsapp' },
+  },
+  {
+    id: 'website',
+    keys: ['website', 'web site', 'landing page', 'web design', 'build a site', 'page copy', 'develop'],
+    reply: "We write the messaging: headlines, section flow, offer copy and the calls to action that guide a visitor to act. We're not a web development shop, but we'll hand your developer the words to build around.",
+    chips: ['Tell me about packages'],
+  },
+  {
+    id: 'small_business',
+    keys: ['small business', 'startup', 'start up', 'new business', 'just started', 'side hustle', 'small', 'no budget', 'tight budget', 'spaza'],
+    reply: "Yes, and that's a good place to start small. Take one focused campaign, see whether it gets a real response, and scale once it's working rather than committing up front.",
+    action: { label: 'Start with a free concept', to: 'contact' },
+  },
+  {
+    id: 'location',
+    keys: ['where are you', 'based', 'located', 'location', 'south africa', 'johannesburg', 'pretoria', 'cape town', 'durban', 'office', 'remote', 'hours', 'open'],
+    reply: "We work with businesses across South Africa, remotely. Office hours are Monday to Friday, 08:00 to 17:00 SAST — but you can send a message any time and we'll pick it up.",
+    action: { label: 'Send a message', to: 'whatsapp' },
+  },
+  {
+    id: 'proof',
+    keys: ['example', 'examples', 'portfolio', 'case study', 'testimonial', 'testimonials', 'reviews', 'proof', 'previous work', 'clients', 'results'],
+    reply: "There's a before-and-after on this page showing the gap between a post people scroll past and one they stop for. Client quotes are being added. Honestly, the fastest proof is a free concept for your own business — then you're judging our thinking on your offer, not someone else's.",
+    action: { label: 'Get a free concept', to: 'contact' },
+  },
+  {
+    id: 'contact',
+    keys: ['contact', 'talk to', 'speak to', 'phone', 'call', 'email', 'whatsapp', 'human', 'person', 'someone', 'agent', 'reach you'],
+    reply: "WhatsApp is fastest and usually gets a reply within a few hours during office hours. Email works too, and you can request a call in the form on this page.",
+    action: { label: 'Open WhatsApp', to: 'whatsapp' },
+  },
+  {
+    id: 'thanks',
+    keys: ['thanks', 'thank you', 'cheers', 'appreciate', 'awesome', 'great', 'perfect'],
+    exactOnly: true,
+    reply: "Any time. If you'd like a concept for your business, send your site or social page and we'll take a proper look.",
+    action: { label: 'Request a concept', to: 'contact' },
+  },
+  {
+    id: 'bye',
+    keys: ['bye', 'goodbye', 'later', 'thats all', 'nothing else'],
+    exactOnly: true,
+    reply: "Cheers. The WhatsApp link stays here whenever you need it.",
+  },
+];
+
+(function initAssistant() {
+  const chat = document.getElementById('chat');
+  if (!chat) return;
+
+  const log = chat.querySelector('.chat-log');
+  const chips = chat.querySelector('.chat-chips');
+  const form = chat.querySelector('.chat-form');
+  const input = chat.querySelector('#chat-input');
+  const closeBtn = chat.querySelector('.chat-close');
+  const STORE = 'brandlift-chat';
+
+  let history = [];
+  let misses = 0;
+  let isOpen = false;
+
+  const normalise = (text) => ` ${String(text).toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()} `;
+
+  /**
+   * Scores every entry against the question and returns the best one.
+   *
+   * Three strengths of match, so a specific phrase beats an incidental
+   * word:
+   *   3x — the whole key, as whole words ("how much")
+   *   2x — a word that starts with the key, which covers plurals and
+   *        simple endings ("websites" for "website")
+   *   1x — every word of a multi-word key present but scattered, which is
+   *        what catches "what do you actually do"
+   * Keys of three characters or fewer need a whole-word match, so "ai"
+   * cannot be triggered by "aim" or "air".
+   *
+   * `exactOnly` entries (greetings, thanks) must be effectively the whole
+   * message, otherwise "hi, how much do you charge" would read as hello.
+   */
+  function findAnswer(question) {
+    const text = normalise(question);
+    const wordCount = text.trim().split(' ').length;
+    let best = null;
+    let bestScore = 0;
+
+    KNOWLEDGE.forEach((entry) => {
+      if (entry.exactOnly && wordCount > 4) return;
+      let score = 0;
+
+      entry.keys.forEach((key) => {
+        const words = key.split(' ');
+        if (text.includes(` ${key} `)) {
+          score += words.length * 3;
+        } else if (key.length > 3 && text.includes(` ${key}`)) {
+          score += words.length * 2;
+        } else if (words.length > 1 && words.every((word) => text.includes(` ${word}`))) {
+          // Scattered words are the weakest signal, and most of a phrase
+          // like "what do you do" is filler. Only the distinctive words
+          // count, otherwise "what packages do you have" scores higher on
+          // the services entry than on the packages one.
+          score += Math.max(1, words.filter((word) => word.length > 3).length);
+        }
+      });
+
+      if (score > bestScore) {
+        bestScore = score;
+        best = entry;
+      }
+    });
+
+    return bestScore >= 2 ? best : null;
+  }
+
+  function scrollLog() {
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function addMessage(who, text, options = {}) {
+    const row = document.createElement('div');
+    row.className = `chat-msg chat-${who}`;
+    const bubble = document.createElement('p');
+    bubble.className = 'chat-bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+
+    if (options.action) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chat-action';
+      btn.textContent = options.action.label;
+      btn.addEventListener('click', () => runAction(options.action));
+      row.appendChild(btn);
+    }
+
+    log.appendChild(row);
+    scrollLog();
+    if (options.remember !== false) {
+      history.push({ who, text });
+      save();
+    }
+    return row;
+  }
+
+  function runAction(action) {
+    if (action.to === 'whatsapp') {
+      window.open(waLink(transcript() || CONTACT.whatsappGreeting), '_blank', 'noopener');
+      return;
+    }
+    if (action.to === 'contact' && action.package) prefillInterest(action.package);
+    setOpen(false);
+    scrollToId(action.to);
+  }
+
+  /**
+   * Renders the suggested questions. The chip row sits under the log and
+   * changes its height, so every caller scrolls again afterwards — without
+   * that the newest answer ends up half out of view.
+   */
+  function showChips(list) {
+    chips.innerHTML = '';
+    (list || []).forEach((label) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chat-chip';
+      chip.textContent = label;
+      chip.addEventListener('click', () => ask(label));
+      chips.appendChild(chip);
+    });
+    requestAnimationFrame(scrollLog);
+  }
+
+  function typing() {
+    const row = document.createElement('div');
+    row.className = 'chat-msg chat-bot chat-typing';
+    row.innerHTML = '<p class="chat-bubble"><span></span><span></span><span></span></p>';
+    log.appendChild(row);
+    scrollLog();
+    return row;
+  }
+
+  // A short pause before replying: an instant answer reads as canned, and it
+  // gives the log time to scroll before the next message lands.
+  function reply(text, options) {
+    const dots = typing();
+    setTimeout(() => {
+      dots.remove();
+      addMessage('bot', text, options);
+      showChips(options && options.chips);
+    }, Math.min(900, 260 + text.length * 4));
+  }
+
+  async function askRemote(question) {
+    const dots = typing();
+    try {
+      const response = await fetch(ASSISTANT.endpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ question, history: history.slice(-6) }),
+      });
+      if (!response.ok) throw new Error('assistant unavailable');
+      const data = await response.json();
+      dots.remove();
+      if (!data.reply) throw new Error('empty reply');
+      addMessage('bot', data.reply);
+      showChips(ASSISTANT.openers);
+    } catch (err) {
+      dots.remove();
+      fallback();
+    }
+  }
+
+  function fallback() {
+    misses += 1;
+    const text = misses >= 2
+      ? "Still not something I can answer well. Let me put you in front of a person — I'll bring this conversation along so you don't have to type it again."
+      : "I'm not sure I got that. I can help with what we do, packages, pricing, how we work, or getting a free concept. You can also send it straight to a person.";
+    addMessage('bot', text, { action: { label: 'Send this to a person on WhatsApp', to: 'whatsapp' } });
+    showChips(ASSISTANT.openers);
+  }
+
+  function ask(question) {
+    const text = String(question).trim();
+    if (!text) return;
+    addMessage('you', text);
+    showChips([]);
+
+    const match = findAnswer(text);
+    if (match) {
+      misses = 0;
+      reply(match.reply, { action: match.action, chips: match.chips || ASSISTANT.openers });
+      return;
+    }
+    if (ASSISTANT.endpoint) {
+      askRemote(text);
+      return;
+    }
+    setTimeout(fallback, 400);
+  }
+
+  function transcript() {
+    if (!history.length) return '';
+    const lines = history.map((m) => `${m.who === 'you' ? 'Me' : 'BrandLift assistant'}: ${m.text}`);
+    return `Hi BrandLift, I was chatting to the assistant on your site:\n\n${lines.join('\n')}\n\nCould someone help from here?`;
+  }
+
+  function save() {
+    try { sessionStorage.setItem(STORE, JSON.stringify(history.slice(-40))); } catch (err) { /* storage blocked */ }
+  }
+
+  function restore() {
+    let saved = null;
+    try { saved = JSON.parse(sessionStorage.getItem(STORE) || 'null'); } catch (err) { /* storage blocked */ }
+    if (Array.isArray(saved) && saved.length) {
+      history = saved;
+      saved.forEach((m) => addMessage(m.who, m.text, { remember: false }));
+      showChips(ASSISTANT.openers);
+      return;
+    }
+    addMessage('bot', ASSISTANT.greeting);
+    showChips(ASSISTANT.openers);
+  }
+
+  function setOpen(next) {
+    isOpen = next;
+    chat.classList.toggle('open', next);
+    chat.setAttribute('aria-hidden', next ? 'false' : 'true');
+    if (next) {
+      if (!log.childElementCount) restore();
+      scrollLog();
+      // Not on touch: focusing the field there throws the keyboard up over
+      // the conversation before anyone has read it.
+      if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+        input.focus({ preventScroll: true });
+      }
+    }
+  }
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const question = input.value;
+    input.value = '';
+    ask(question);
+  });
+
+  closeBtn.addEventListener('click', () => setOpen(false));
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && isOpen) setOpen(false);
+  });
+
+  document.querySelectorAll('[data-chat-open]').forEach((btn) => {
+    btn.addEventListener('click', (event) => {
+      event.preventDefault();
+      setOpen(true);
+    });
+  });
+
+  chat.querySelectorAll('[data-channel="whatsapp"]').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.open(waLink(transcript() || CONTACT.whatsappGreeting), '_blank', 'noopener');
+    });
+  });
+})();
 
 document.getElementById('year').textContent = new Date().getFullYear();
 
