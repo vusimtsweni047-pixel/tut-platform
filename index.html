@@ -3060,8 +3060,14 @@ h1 {
 :root[data-theme="dark"] .hero-glow { display: none; }
 
 /* ============ CURSOR RING (desktop) ============ */
-/* Trails the native cursor; grows and shows the lift arrow over anything
-   clickable. Difference blending keeps it visible on every surface. */
+/* Sits ON the native cursor rather than trailing it: the position is the
+   raw pointer coordinate, written once per frame, so it never falls
+   behind. Difference blending keeps it visible on every surface.
+   Nothing here transitions `transform` — the grow-over-a-link effect is a
+   scale eased in JS inside the same transform, because a CSS transition on
+   transform would smooth the POSITION too and reintroduce the lag. For the
+   same reason the size is a scale, not animated width/height/margin, which
+   are layout properties and forced a reflow on every hover change. */
 .cursor-ring {
   position: fixed;
   top: 0;
@@ -3071,16 +3077,11 @@ h1 {
   margin: -17px 0 0 -17px;
   border-radius: 50%;
   border: 1.5px solid #ffffff;
-  display: grid;
-  place-items: center;
-  color: #000000;
-  font-size: 0;
-  font-weight: 800;
   mix-blend-mode: difference;
   pointer-events: none;
   z-index: 9999;
   opacity: 0;
-  transition: opacity 0.3s ease, width 0.25s var(--ease), height 0.25s var(--ease), margin 0.25s var(--ease), background 0.25s ease, font-size 0.2s ease;
+  transition: opacity 0.22s ease, background-color 0.2s ease;
   will-change: transform;
 }
 
@@ -3088,11 +3089,7 @@ h1 {
 .cursor-ring.hide { opacity: 0; }
 
 .cursor-ring.hot {
-  width: 50px;
-  height: 50px;
-  margin: -25px 0 0 -25px;
-  border-width: 2px;
-  background: rgba(255, 255, 255, 0.14);
+  background-color: rgba(255, 255, 255, 0.16);
 }
 
 /* ============ SECTION RAIL (wide desktop) ============ */
@@ -5381,6 +5378,22 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
 })();
 
 /* ============ POINTER FOLLOWERS: spotlight (dark) + cursor ring ============ */
+/**
+ * Two followers with deliberately different jobs:
+ *
+ *  - The ring IS the cursor, so it must be exactly under the pointer. It is
+ *    drawn at the raw coordinate of the most recent pointer event, written
+ *    once per animation frame. No smoothing on the position at all: any
+ *    easing factor below 1 leaves the ring permanently behind a moving
+ *    pointer (at 0.28/frame it trailed by ~40px during a fast sweep and
+ *    took ~20 frames to catch up after a jump), which reads as lag.
+ *  - The spotlight is a soft 1100px glow, where a gentle trail is the
+ *    point, so it keeps its easing.
+ *
+ * `pointerrawupdate` (where supported) delivers positions at the pointer's
+ * own sampling rate instead of the coalesced once-per-frame `pointermove`,
+ * so the coordinate used on each frame is the freshest one available.
+ */
 (function initPointerFollowers() {
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -5390,42 +5403,99 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   const ring = document.querySelector('.cursor-ring');
   if (!spot && !ring) return;
 
+  const SPOT_EASE = 0.16;
+  const SCALE_EASE = 0.3;
+  const HOT_SCALE = 1.5;
+
   let tx = -999, ty = -999;
-  let sx = tx, sy = ty, rx = tx, ry = ty;
+  let sx = tx, sy = ty;
+  let scale = 1, targetScale = 1;
   let frame = null;
   let seen = false;
+  let lastTarget = null;
 
   const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
 
   function tick() {
-    sx += (tx - sx) * 0.1;
-    sy += (ty - sy) * 0.1;
-    rx += (tx - rx) * 0.28;
-    ry += (ty - ry) * 0.28;
-    if (spot) spot.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px)`;
-    if (ring) ring.style.transform = `translate(${rx.toFixed(1)}px, ${ry.toFixed(1)}px)`;
-    const settled = Math.abs(tx - sx) < 0.4 && Math.abs(ty - sy) < 0.4 && Math.abs(tx - rx) < 0.4 && Math.abs(ty - ry) < 0.4;
-    frame = settled ? null : requestAnimationFrame(tick);
+    frame = null;
+
+    if (ring) {
+      scale += (targetScale - scale) * SCALE_EASE;
+      if (Math.abs(targetScale - scale) < 0.004) scale = targetScale;
+      // translate3d keeps this on the compositor; the scale rides along in
+      // the same transform so the position stays exact while it eases.
+      ring.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale.toFixed(3)})`;
+    }
+
+    if (spot) {
+      sx += (tx - sx) * SPOT_EASE;
+      sy += (ty - sy) * SPOT_EASE;
+      spot.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0)`;
+    }
+
+    // Keep going only while something is still easing. The ring's position
+    // is already exact, so it never keeps the loop alive on its own.
+    const spotSettled = !spot || (Math.abs(tx - sx) < 0.4 && Math.abs(ty - sy) < 0.4);
+    const scaleSettled = scale === targetScale;
+    if (!spotSettled || !scaleSettled) frame = requestAnimationFrame(tick);
   }
 
-  document.addEventListener('pointermove', (event) => {
+  function schedule() {
+    if (frame === null) frame = requestAnimationFrame(tick);
+  }
+
+  function setPosition(event) {
     tx = event.clientX;
     ty = event.clientY;
     if (!seen) {
       seen = true;
-      sx = rx = tx;
-      sy = ry = ty;
+      sx = tx;
+      sy = ty;
+      if (ring) ring.classList.add('on');
     }
+    schedule();
+  }
+
+  // Hover state is the only part that touches the DOM tree, so it runs on
+  // the ordinary (coalesced) move event and only when the element under
+  // the pointer actually changed — closest() on every raw sample would be
+  // wasted work on exactly the frames that need to stay cheap.
+  function setHoverState(event) {
     if (spot) spot.classList.toggle('on', isDark());
-    if (ring) {
-      const target = event.target;
-      const overField = target.closest('input, textarea, select, .compare');
-      const overClickable = !overField && target.closest('a, button, [role="button"], label, .nav-shell, .ticker-track span');
-      ring.classList.add('on');
-      ring.classList.toggle('hide', Boolean(overField));
-      ring.classList.toggle('hot', Boolean(overClickable));
+    if (!ring) return;
+
+    ring.classList.add('on');
+    const target = event.target;
+    if (target === lastTarget) return;
+    lastTarget = target;
+
+    const overField = target.closest('input, textarea, select, .compare');
+    const overClickable = !overField && target.closest('a, button, [role="button"], label, .nav-shell, .ticker-track span');
+    ring.classList.toggle('hide', Boolean(overField));
+    ring.classList.toggle('hot', Boolean(overClickable));
+
+    const nextScale = overClickable ? HOT_SCALE : 1;
+    if (nextScale !== targetScale) {
+      targetScale = nextScale;
+      schedule();
     }
-    if (!frame) frame = requestAnimationFrame(tick);
+  }
+
+  if ('onpointerrawupdate' in window) {
+    document.addEventListener('pointerrawupdate', setPosition, { passive: true });
+  }
+
+  document.addEventListener('pointermove', (event) => {
+    setPosition(event);
+    setHoverState(event);
+  }, { passive: true });
+
+  // A click can move what is under the pointer without the pointer moving
+  // (a menu opens, a card expands), so re-test rather than leave the ring
+  // stuck in its previous state.
+  document.addEventListener('pointerdown', (event) => {
+    lastTarget = null;
+    setHoverState(event);
   }, { passive: true });
 
   document.addEventListener('pointerleave', () => {
