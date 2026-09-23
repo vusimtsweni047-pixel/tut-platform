@@ -86,21 +86,38 @@
   <link rel="canonical" href="https://brandlift.co.za/" />
   <meta name="theme-color" content="#faf8f3" />
 
-  <!-- Applies the saved (or system) theme before the first paint so there's
-       no flash of the wrong mode. -->
+  <!-- Settles the theme before the first paint, so there is no flash of the
+       wrong one.
+
+       The device decides. A visitor who taps the switch overrides it, but
+       only for as long as their device stays as it was when they tapped:
+       the choice is stored with the device setting it was made against, and
+       if that later differs the choice is dropped and the device wins
+       again. Otherwise someone who tried dark once would be stuck with it
+       for good, no matter what their phone was set to afterwards. -->
   <script>
     (function () {
+      var root = document.documentElement;
+      var device = 'light';
       try {
-        var t = localStorage.getItem('brandlift-theme');
-        if (t !== 'dark' && t !== 'light') {
-          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        device = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      } catch (e) { /* no matchMedia */ }
+      var theme = device;
+      try {
+        var raw = localStorage.getItem('brandlift-theme');
+        if (raw) {
+          // Older versions stored the bare word, so treat that as a choice
+          // made against a device set the same way.
+          var saved = raw.charAt(0) === '{' ? JSON.parse(raw) : { theme: raw, device: raw };
+          if ((saved.theme === 'dark' || saved.theme === 'light') && saved.device === device) {
+            theme = saved.theme;
+          } else {
+            localStorage.removeItem('brandlift-theme');
+          }
         }
-        document.documentElement.setAttribute('data-theme', t);
-        document.documentElement.classList.add('js');
-      } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
-        document.documentElement.classList.add('js');
-      }
+      } catch (e) { /* storage blocked or unreadable */ }
+      root.setAttribute('data-theme', theme);
+      root.classList.add('js');
     })();
   </script>
 
@@ -6697,9 +6714,16 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     });
   }
 
+  const deviceQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  const deviceTheme = () => (deviceQuery.matches ? 'dark' : 'light');
+
   input.addEventListener('change', () => {
     const next = input.checked ? 'dark' : 'light';
-    try { localStorage.setItem(KEY, next); } catch (err) { /* storage blocked */ }
+    // Stored with the device setting it was chosen against, so the choice
+    // can be recognised as stale once the device changes.
+    try {
+      localStorage.setItem(KEY, JSON.stringify({ theme: next, device: deviceTheme() }));
+    } catch (err) { /* storage blocked */ }
 
     const rect = face ? face.getBoundingClientRect() : null;
     const x = origin ? origin.x : (rect ? rect.left + rect.width / 2 : window.innerWidth / 2);
@@ -6721,11 +6745,21 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
     }).catch(() => { /* transition skipped */ });
   });
 
-  // Follow the OS setting until the visitor picks one themselves.
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    try { if (localStorage.getItem(KEY)) return; } catch (err) { /* fall through */ }
+  /**
+   * The device changing is the clearest signal there is, so it always wins:
+   * any earlier manual choice is dropped and the page follows. Without this
+   * one tap on the switch would outrank the device for good.
+   */
+  const onDeviceChange = (e) => {
+    try { localStorage.removeItem(KEY); } catch (err) { /* storage blocked */ }
     paint(e.matches ? 'dark' : 'light');
-  });
+  };
+
+  if (deviceQuery.addEventListener) {
+    deviceQuery.addEventListener('change', onDeviceChange);
+  } else if (deviceQuery.addListener) {
+    deviceQuery.addListener(onDeviceChange);
+  }
 })();
 
 /* ============ POINTER FOLLOWERS: spotlight (dark) + cursor ring ============ */
