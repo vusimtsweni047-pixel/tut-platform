@@ -4044,6 +4044,9 @@ html:not(.js) .dock-item-chat { display: none; }
 /* One copy of the mark, painted wherever it is needed. */
 .logo-mark {
   display: block;
+  /* Holds its size beside text in a flex row; without this the footer mark
+     squashed from 36px to 24px on a narrow phone. */
+  flex: 0 0 auto;
   aspect-ratio: 384 / 349;
   /* The mark used to be an <img>, which carried its own intrinsic size. A
      background has none, so any placement sized in percentages needs a
@@ -4112,13 +4115,17 @@ html:not(.js) .dock-item-chat { display: none; }
 }
 
 .legal {
-  padding: 16px 0 4px;
+  padding: 2px 0 4px;
   border-top: 1px solid var(--line);
 }
 
 .legal > summary {
   cursor: pointer;
   list-style: none;
+  /* A single line of small type is a poor tap target, so the padding brings
+     it up to a comfortable 44px on a phone. */
+  padding: 16px 0;
+  touch-action: manipulation;
   font-family: var(--font-mono);
   font-size: 0.72rem;
   text-transform: uppercase;
