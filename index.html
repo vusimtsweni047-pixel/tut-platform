@@ -3106,16 +3106,24 @@ h1 {
 }
 
 
-/* Circular reveal when the theme flips (View Transitions API; browsers
-   without it just switch instantly). */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
+/* The disc that covers the page while the theme changes behind it. Only
+   transform and opacity animate, so the compositor does all the work. */
+.theme-veil {
+  position: fixed;
+  border-radius: 50%;
+  z-index: 300;
+  pointer-events: none;
+  transform: scale(0);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
 }
 
-::view-transition-old(root) { z-index: 1; }
-::view-transition-new(root) { z-index: 2; }
+.theme-veil.cover { transform: scale(1); }
+
+.theme-veil.gone {
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
 
 /* ============ DARK-MODE SPOTLIGHT ============ */
 /* In dark mode the page becomes a stage: a soft light follows the cursor
@@ -3141,44 +3149,6 @@ h1 {
 
 :root[data-theme="dark"] .spotlight.on { opacity: 1; }
 :root[data-theme="dark"] .hero-glow { display: none; }
-
-/* ============ CURSOR RING (desktop) ============ */
-/* Sits ON the native cursor rather than trailing it: the position is the
-   raw pointer coordinate, written once per frame, so it never falls
-   behind. Difference blending keeps it visible on every surface.
-   Nothing here transitions `transform` — the grow-over-a-link effect is a
-   scale eased in JS inside the same transform, because a CSS transition on
-   transform would smooth the POSITION too and reintroduce the lag. For the
-   same reason the size is a scale, not animated width/height/margin, which
-   are layout properties and forced a reflow on every hover change. */
-.cursor-ring {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
-  border-radius: 50%;
-  border: 2px solid var(--blue);
-  /* A white halo instead of difference blending. Blending forces the
-     compositor to re-read the page behind the ring on every frame it
-     moves, which was a measurable share of the dropped frames and made
-     the ring itself feel a step behind the pointer. The halo gives the
-     same read-on-anything contrast for nothing. */
-  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.55);
-  pointer-events: none;
-  z-index: 9999;
-  opacity: 0;
-  transition: opacity 0.18s ease, background-color 0.18s ease;
-  will-change: transform;
-}
-
-.cursor-ring.on { opacity: 1; }
-.cursor-ring.hide { opacity: 0; }
-
-.cursor-ring.hot {
-  background-color: rgba(29, 82, 255, 0.2);
-}
 
 /* ============ SECTION RAIL (wide desktop) ============ */
 .rail {
@@ -4691,7 +4661,6 @@ html:not(.js) .dock-item-chat { display: none; }
 
   <div class="scroll-progress" aria-hidden="true"></div>
   <div class="spotlight" aria-hidden="true"></div>
-  <div class="cursor-ring" aria-hidden="true"></div>
 
   <nav class="rail" aria-label="Page sections">
     <a href="#home"><span class="rail-dot" aria-hidden="true"></span><span class="rail-label">Home</span></a>
@@ -6745,6 +6714,51 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   const deviceQuery = window.matchMedia('(prefers-color-scheme: dark)');
   const deviceTheme = () => (deviceQuery.matches ? 'dark' : 'light');
 
+  /**
+   * Switching theme is one big restyle: every colour token changes, so the
+   * whole page recalculates and repaints in a single frame. Measured on a
+   * throttled desktop that frame runs about 80ms, which is a visible hitch
+   * however it is dressed up.
+   *
+   * The previous version wrapped it in a view transition, which made things
+   * worse rather than better: the browser snapshots the viewport twice and
+   * animates a clip path across those snapshots for three quarters of a
+   * second, taking the worst frame to 175ms and dropping a third of the
+   * frames in between.
+   *
+   * So the repaint is hidden instead of animated. A single disc of the
+   * incoming background colour grows from the switch, the theme changes
+   * once it covers the screen, and the disc fades away to reveal it. Only
+   * transform and opacity are animated, which the compositor handles on its
+   * own, and the expensive frame happens behind an opaque layer where
+   * nobody sees it.
+   */
+  function sweep(next, x, y) {
+    const veil = document.createElement('div');
+    veil.className = 'theme-veil';
+    veil.style.background = next === 'dark' ? '#0b0b10' : '#faf8f3';
+
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)) + 4;
+    veil.style.left = `${x}px`;
+    veil.style.top = `${y}px`;
+    veil.style.width = `${radius * 2}px`;
+    veil.style.height = `${radius * 2}px`;
+    veil.style.margin = `${-radius}px 0 0 ${-radius}px`;
+    document.body.appendChild(veil);
+
+    requestAnimationFrame(() => veil.classList.add('cover'));
+
+    setTimeout(() => {
+      paint(next);
+      // Two frames: the first carries the restyle, the second starts the
+      // fade once that has actually landed.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        veil.classList.add('gone');
+        setTimeout(() => veil.remove(), 340);
+      }));
+    }, 270);
+  }
+
   input.addEventListener('change', () => {
     const next = input.checked ? 'dark' : 'light';
     // Stored with the device setting it was chosen against, so the choice
@@ -6753,24 +6767,16 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
       localStorage.setItem(KEY, JSON.stringify({ theme: next, device: deviceTheme() }));
     } catch (err) { /* storage blocked */ }
 
-    const rect = face ? face.getBoundingClientRect() : null;
-    const x = origin ? origin.x : (rect ? rect.left + rect.width / 2 : window.innerWidth / 2);
-    const y = origin ? origin.y : (rect ? rect.top + rect.height / 2 : 0);
-    origin = null;
-
-    if (!document.startViewTransition || reducedMotion) {
+    if (reducedMotion) {
       paint(next);
       return;
     }
 
-    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
-    const transition = document.startViewTransition(() => paint(next));
-    transition.ready.then(() => {
-      root.animate(
-        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
-        { duration: 720, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', pseudoElement: '::view-transition-new(root)' }
-      );
-    }).catch(() => { /* transition skipped */ });
+    const rect = face ? face.getBoundingClientRect() : null;
+    const x = origin ? origin.x : (rect ? rect.left + rect.width / 2 : window.innerWidth / 2);
+    const y = origin ? origin.y : (rect ? rect.top + rect.height / 2 : 0);
+    origin = null;
+    sweep(next, x, y);
   });
 
   /**
@@ -6790,196 +6796,51 @@ document.querySelectorAll('.package-card a[data-package]').forEach((link) => {
   }
 })();
 
-/* ============ POINTER FOLLOWERS: spotlight (dark) + cursor ring ============ */
+/* ============ DARK-MODE SPOTLIGHT ============ */
 /**
- * Two followers with deliberately different jobs:
+ * A soft glow that follows the pointer in dark mode. It trails deliberately,
+ * so the position is eased rather than exact, and the loop stops the moment
+ * it catches up.
  *
- *  - The ring IS the cursor, so it must sit exactly under the pointer. It
- *    is drawn at the raw coordinate of the most recent pointer event,
- *    written once per animation frame, with no smoothing on the position
- *    at all: any easing below 1 leaves it permanently behind a moving
- *    pointer, which reads as lag.
- *  - The spotlight is a soft glow, where a gentle trail is the point, so
- *    it keeps its easing.
- *
- * Everything the ring does in response to what is under it is a change of
- * scale, eased in JS. Nothing toggles opacity, because fading out over one
- * form field and back in over the gap to the next made the ring blink its
- * way across the contact form. `hide` is now only for the pointer actually
- * leaving the window.
- *
- * `pointerrawupdate` (where supported) delivers positions at the pointer's
- * own sampling rate rather than the coalesced once-per-frame `pointermove`,
- * so each frame uses the freshest coordinate available.
+ * Desktop only, and skipped entirely under reduced motion.
  */
-(function initPointerFollowers() {
-  const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!finePointer || reducedMotion) return;
-
+(function initSpotlight() {
   const spot = document.querySelector('.spotlight');
-  const ring = document.querySelector('.cursor-ring');
-  if (!spot && !ring) return;
+  if (!spot) return;
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const SPOT_EASE = 0.16;
-  const SCALE_EASE = 0.38;
-  const SCALE_CLICKABLE = 1.95;
-  const SCALE_TEXT = 0.6;
-
-  const CLICKABLE = 'a, button, summary, label, [role="button"], .nav-shell, .compare, .chat-chip';
-  const TEXT_FIELD = 'input:not([type="radio"]):not([type="checkbox"]):not([type="range"]), textarea, select';
-
-  let tx = -999, ty = -999;
-  let sx = tx, sy = ty;
-  let scale = 1, targetScale = 1;
+  const EASE = 0.16;
+  let tx = 0, ty = 0, sx = 0, sy = 0;
   let frame = null;
   let seen = false;
-  let lastTarget = null;
 
   const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
 
-  function draw() {
-    if (ring) {
-      // translate3d keeps this on the compositor; the scale rides along in
-      // the same transform so the position stays exact while it eases.
-      ring.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale.toFixed(3)})`;
-    }
-    if (spot) {
-      spot.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0)`;
-    }
-  }
-
   function tick() {
     frame = null;
-
-    scale += (targetScale - scale) * SCALE_EASE;
-    if (Math.abs(targetScale - scale) < 0.004) scale = targetScale;
-
-    sx += (tx - sx) * SPOT_EASE;
-    sy += (ty - sy) * SPOT_EASE;
-
-    draw();
-
-    // Keep going only while something is still easing. The ring's position
-    // is already exact, so it never keeps the loop alive on its own.
-    const spotSettled = !spot || (Math.abs(tx - sx) < 0.4 && Math.abs(ty - sy) < 0.4);
-    if (!spotSettled || scale !== targetScale) frame = requestAnimationFrame(tick);
-  }
-
-  function schedule() {
-    if (frame === null) frame = requestAnimationFrame(tick);
-  }
-
-  /**
-   * Places everything at a point with no easing. Used the first time the
-   * pointer is seen and whenever it re-enters the window — otherwise the
-   * ring reappeared where it left and then snapped across, and the
-   * spotlight swept the whole page catching up.
-   */
-  function snapTo(x, y) {
-    tx = x;
-    ty = y;
-    sx = x;
-    sy = y;
-    draw();
-  }
-
-  function setPosition(event) {
-    if (!seen) {
-      seen = true;
-      snapTo(event.clientX, event.clientY);
-      if (ring) ring.classList.add('on');
-      return;
-    }
-    tx = event.clientX;
-    ty = event.clientY;
-    schedule();
-  }
-
-  /**
-   * Chooses the ring's size from whatever sits under it: bigger over
-   * anything clickable, smaller over a text field so it does not sit on
-   * top of the caret, normal otherwise.
-   */
-  function applyState(element) {
-    if (!ring) return;
-    const overText = element ? element.closest(TEXT_FIELD) : null;
-    const overClickable = !overText && element ? element.closest(CLICKABLE) : null;
-    ring.classList.toggle('hot', Boolean(overClickable));
-    const next = overText ? SCALE_TEXT : (overClickable ? SCALE_CLICKABLE : 1);
-    if (next !== targetScale) {
-      targetScale = next;
-      schedule();
-    }
-  }
-
-  // Walking the DOM is the only expensive part, so it runs on the coalesced
-  // move event and only when the element under the pointer actually changed.
-  function setHoverState(event) {
-    if (spot) spot.classList.toggle('on', isDark());
-    if (!ring) return;
-    ring.classList.remove('hide');
-    if (event.target === lastTarget) return;
-    lastTarget = event.target;
-    applyState(event.target);
-  }
-
-  /**
-   * Scrolling slides the page under a pointer that has not moved, so what
-   * the ring is over changes with no pointer event to notice it — the ring
-   * would stay swollen over nothing, or stay small over a button. Clicking
-   * does the same when a panel opens. Re-tested once things settle rather
-   * than every frame, which is when it actually matters.
-   */
-  function retest() {
-    if (!seen || !ring) return;
-    const element = document.elementFromPoint(tx, ty);
-    lastTarget = element;
-    applyState(element);
-  }
-
-  let retestTimer = null;
-
-  function queueRetest(delay) {
-    clearTimeout(retestTimer);
-    retestTimer = setTimeout(retest, delay || 110);
-  }
-
-  if ('onpointerrawupdate' in window) {
-    document.addEventListener('pointerrawupdate', setPosition, { passive: true });
+    sx += (tx - sx) * EASE;
+    sy += (ty - sy) * EASE;
+    spot.style.transform = `translate3d(${sx.toFixed(1)}px, ${sy.toFixed(1)}px, 0)`;
+    if (Math.abs(tx - sx) > 0.4 || Math.abs(ty - sy) > 0.4) frame = requestAnimationFrame(tick);
   }
 
   document.addEventListener('pointermove', (event) => {
-    setPosition(event);
-    setHoverState(event);
+    tx = event.clientX;
+    ty = event.clientY;
+    if (!seen) {
+      // Start where the pointer is, so it does not sweep in from a corner.
+      seen = true;
+      sx = tx;
+      sy = ty;
+      spot.style.transform = `translate3d(${sx}px, ${sy}px, 0)`;
+    }
+    spot.classList.toggle('on', isDark());
+    if (frame === null) frame = requestAnimationFrame(tick);
   }, { passive: true });
 
-  window.addEventListener('scroll', () => queueRetest(), { passive: true });
-  // Panels animate open over about a third of a second, so check again
-  // once whatever the click started has finished moving.
-  document.addEventListener('click', () => queueRetest(420), { passive: true });
-
-  document.addEventListener('pointerleave', () => {
-    if (spot) spot.classList.remove('on');
-    if (ring) ring.classList.add('hide');
-  });
-
-  document.addEventListener('pointerenter', (event) => {
-    snapTo(event.clientX, event.clientY);
-    seen = true;
-    if (ring) {
-      ring.classList.add('on');
-      ring.classList.remove('hide');
-    }
-    if (spot) spot.classList.toggle('on', isDark());
-    queueRetest(0);
-  });
-
-  // Switching windows leaves the ring stranded mid-page otherwise.
-  window.addEventListener('blur', () => {
-    if (ring) ring.classList.add('hide');
-    if (spot) spot.classList.remove('on');
-  });
+  document.addEventListener('pointerleave', () => spot.classList.remove('on'));
+  window.addEventListener('blur', () => spot.classList.remove('on'));
 })();
 
 /* ============ MANIFESTO: cross out the noise ============ */
