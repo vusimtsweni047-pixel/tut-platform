@@ -2693,14 +2693,17 @@ h1 {
 }
 
 /* ============ FLOATING CONTACT DOCK ============ */
-/* The dock is a flex column, so the container is as big as its tallest
-   child — the panel. A hidden panel still takes up layout (visibility,
-   not display), which made this an invisible ~320x380 box pinned over the
-   bottom of the viewport: 37% of a phone screen, swallowing every tap
-   that landed in it while scrolling still worked, because dragging a
-   non-scrollable fixed element still scrolls the page. The container must
-   therefore never take pointer events; only the parts you can actually
-   see turn them back on. */
+/* The contact panel used to sit in this column and keep its space even
+   while hidden, making the container an invisible ~320x380 box over the
+   bottom of the screen that swallowed taps. That was patched by turning
+   pointer events off on the container and back on for each visible child,
+   but relying on that nesting is fragile: some browsers do not restore
+   touch handling on a child of a pointer-events:none parent, which takes
+   the button with it.
+
+   The panel is taken out of the flow instead. The container is then only
+   as big as the parts you can see, so it covers nothing it should not and
+   needs no pointer-events trick at all. */
 .dock {
   position: fixed;
   right: 20px;
@@ -2710,13 +2713,14 @@ h1 {
   flex-direction: column;
   align-items: flex-end;
   gap: 12px;
-  pointer-events: none;
   transition: transform 0.45s var(--ease), opacity 0.3s ease;
 }
 
-.dock-toggle,
-.dock-nudge {
-  pointer-events: auto;
+.dock-panel {
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 12px;
 }
 
 .dock.is-hidden {
@@ -4151,6 +4155,45 @@ html:not(.js) .dock-item-chat { display: none; }
    doing nothing. Hidden outright once the assistant is up. */
 .dock-nudge { cursor: pointer; }
 .dock.chat-live .dock-nudge { display: none; }
+
+/* ============ COMPARE: KEEP THE SLIDER OFF THE BUTTON ============ */
+/* The range input is invisible and used to cover the whole widget, which
+   put it directly on top of the mock "Claim offer" button. Chromium hit
+   tests that correctly and gives the button the tap; a range input is a
+   native gesture control though, and not every engine gives the tap up so
+   readily. It is now a band across the middle, where the drag handle
+   actually is, leaving the button and the row above it clear. */
+.compare-range {
+  inset: auto 0 auto 0;
+  top: 50%;
+  height: 120px;
+  transform: translateY(-50%);
+}
+
+@media (max-width: 620px) {
+  .compare-range { height: 96px; }
+}
+
+/* ============ TAPPABLE LABELS ============ */
+/* Every control built from a label and a hidden input. Safari on iOS uses
+   cursor:pointer as one of its signals that an element is meant to be
+   tapped, and touch-action:manipulation keeps the tap from being held back
+   waiting to see if a double-tap-to-zoom is coming. Cheap, and it removes a
+   class of "nothing happens when I tap it" on phones. */
+.mock-cta,
+.topic-chip,
+.reply-opt,
+.next-step,
+.compare-view,
+.theme-toggle,
+.menu-toggle,
+.finder-options label,
+.legal > summary,
+.service-card > summary {
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
 /* ============ DARK MODE ============ */
 /* Same design, lights off. Tokens flip first; the handful of surfaces that
    were hard-coded for paper get explicit overrides below. The black band
