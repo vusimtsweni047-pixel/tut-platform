@@ -813,6 +813,191 @@ h1 {
   font-size: clamp(2rem, 3.6vw, 3.1rem);
 }
 
+/* ============ FREE CONCEPT OFFER ============ */
+/* Tokens only, no blend modes and no backdrop-filter, so the band costs
+   nothing to scroll past and follows the theme without a dark-mode twin. */
+.offer-section {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 40px 24px 16px;
+}
+
+.offer {
+  position: relative;
+  /* z-index:0 makes this a stacking context, so the decorative arrow can
+     sit at z-index:-1 — above this card's own background but behind every
+     word on it. Without the stacking context it would paint over the copy. */
+  z-index: 0;
+  overflow: hidden;
+  padding: 40px 44px 44px;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-lg);
+  background: var(--grad-brand-soft), var(--surface);
+}
+
+/* Decoration only, and never in the way of a tap. */
+.offer::after {
+  content: "\2197";
+  position: absolute;
+  z-index: -1;
+  top: -44px;
+  right: 14px;
+  color: var(--blue);
+  opacity: 0.07;
+  font-size: 15rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.offer-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 22px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--grad-brand);
+  color: var(--white);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+}
+
+.offer-badge span {
+  flex: 0 0 auto;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--white);
+}
+
+.offer-head {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 18px 48px;
+  align-items: end;
+}
+
+.offer-head h2 {
+  font-size: clamp(1.7rem, 2.9vw, 2.5rem);
+}
+
+.offer-lead {
+  margin: 0;
+  max-width: 48ch;
+  color: var(--ink-soft);
+  font-size: 1.02rem;
+}
+
+/* Hairline dividers from a 1px grid gap over the stroke colour, so the
+   three steps read as one panel instead of three floating boxes. */
+.offer-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin: 34px 0 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--stroke);
+  border-radius: var(--r-md);
+  background: var(--stroke);
+  overflow: hidden;
+}
+
+.offer-steps li {
+  padding: 24px 24px 26px;
+  background: var(--surface);
+}
+
+.offer-num {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--blue);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+}
+
+.offer-steps h3 {
+  font-size: 1.12rem;
+}
+
+.offer-steps p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+  line-height: 1.5;
+}
+
+.offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 22px;
+  margin-top: 30px;
+}
+
+.offer-note {
+  margin: 0;
+  max-width: 36ch;
+  color: var(--ink-soft);
+  font-family: var(--font-voice);
+  font-style: italic;
+  font-size: 1rem;
+}
+
+/* The same promise under the hero buttons, in small print, for anyone who
+   decides before they scroll. */
+.hero-offer {
+  display: flex;
+  /* flex-start, not center: this line wraps to two on a phone, and a
+     centred dot would float between them instead of marking the first. */
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+}
+
+.hero-offer span {
+  flex: 0 0 auto;
+  margin-top: 0.42em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+
+@media (max-width: 980px) {
+  .offer-head {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .offer-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .offer-section { padding: 28px 18px 8px; }
+
+  .offer { padding: 28px 20px 30px; }
+
+  .offer::after { top: -26px; right: 6px; font-size: 9rem; }
+
+  .offer-steps li { padding: 20px 20px 22px; }
+
+  .offer-actions { align-items: stretch; }
+
+  .offer-actions .btn { width: 100%; }
+
+  .offer-note { max-width: none; }
+}
+
 /* ============ SHARED SECTION HEADERS ============ */
 .section-kicker {
   display: flex;
@@ -4734,7 +4919,7 @@ html:not(.js) .dock-item-chat { display: none; }
         <a href="#services" class="nav-item">Services</a>
         <a href="#process" class="nav-item">Process</a>
         <a href="#packages" class="nav-item">Packages</a>
-        <a href="#contact" class="nav-item">Get Concept</a>
+        <a href="#contact" class="nav-item">Free concept</a>
       </div>
 
       <input type="checkbox" id="theme-switch" class="switch-input" aria-label="Dark mode" />
@@ -4791,15 +4976,18 @@ html:not(.js) .dock-item-chat { display: none; }
           Sharper campaigns, content people actually stop for, and ads that hold attention — with AI doing the heavy lifting.
         </p>
 
-        <div class="human-note">
-          <span class="human-note-dot" aria-hidden="true"></span>
-          <span class="human-note-text"><strong>How we start:</strong> we look at your business like a customer would — what they notice, what they understand, and what would make them take the next step.</span>
-        </div>
-
+        <!-- The "How we start" note used to sit here. It said almost word for
+             word what step 02 of the offer band below now says, and the ~130px
+             it took pushed the primary button under the fold on a 1366x768
+             laptop, a 1536x864 laptop and a phone. Its .human-note styles are
+             deliberately left in place further up, so the block can be pasted
+             back here if it is wanted again. -->
         <div class="hero-actions">
-          <a href="#contact" class="btn btn-primary">Get a Campaign Concept</a>
+          <a href="#contact" class="btn btn-primary">Get a free campaign concept</a>
           <a href="#services" class="btn btn-secondary">Explore the System</a>
         </div>
+
+        <p class="hero-offer"><span aria-hidden="true"></span>Free &middot; no obligation &middot; a link to your page is enough</p>
       </div>
 
       <div class="hero-right">
@@ -4835,6 +5023,52 @@ html:not(.js) .dock-item-chat { display: none; }
       <div class="ticker-track" aria-hidden="true">
         <a class="ticker-word" data-service="1" href="#services">Strategy</a><a class="ticker-word" data-service="3" href="#services">Creative</a><a class="ticker-word" data-service="3" href="#services">Ads</a><a class="ticker-word" data-service="2" href="#services">Content</a><a class="ticker-word" data-service="4" href="#services">AI Production</a><a class="ticker-word" data-service="6" href="#services">Reporting</a><a class="ticker-word" data-service="7" href="#services">Lead Response</a>
         <a class="ticker-word" data-service="1" href="#services">Strategy</a><a class="ticker-word" data-service="3" href="#services">Creative</a><a class="ticker-word" data-service="3" href="#services">Ads</a><a class="ticker-word" data-service="2" href="#services">Content</a><a class="ticker-word" data-service="4" href="#services">AI Production</a><a class="ticker-word" data-service="6" href="#services">Reporting</a><a class="ticker-word" data-service="7" href="#services">Lead Response</a>
+      </div>
+    </section>
+
+    <!-- The offer, stated high on the page. It used to live only inside the
+         contact card at the very bottom, which made the single strongest
+         reason to get in touch with a young agency the last thing anyone
+         read, if they got that far. -->
+    <section id="offer" class="offer-section" aria-labelledby="offer-title">
+      <div class="offer">
+        <p class="offer-badge"><span aria-hidden="true"></span>Free &middot; no obligation</p>
+
+        <div class="offer-head">
+          <h2 id="offer-title">Send us your page. We&rsquo;ll send back a campaign concept.</h2>
+          <p class="offer-lead">
+            Not a sales call, and not a template with your name dropped into it. One clear page
+            written for your business: the campaign message, who it&rsquo;s for, and the first
+            content ideas we&rsquo;d run. Yours to keep either way.
+          </p>
+        </div>
+
+        <ol class="offer-steps">
+          <li>
+            <span class="offer-num" aria-hidden="true">01</span>
+            <h3>You send a link</h3>
+            <p>Your website, Instagram, Facebook or TikTok. No brief needed &mdash; a link is enough to start.</p>
+          </li>
+          <li>
+            <span class="offer-num" aria-hidden="true">02</span>
+            <h3>We look at it like a customer</h3>
+            <p>What people notice first, what they actually understand, and what would make them take the next step.</p>
+          </li>
+          <li>
+            <span class="offer-num" aria-hidden="true">03</span>
+            <h3>You get the concept</h3>
+            <p>One page, usually back within a few working days. If it&rsquo;s not for you, keep it and walk away.</p>
+          </li>
+        </ol>
+
+        <div class="offer-actions">
+          <!-- Straight to the form, not the top of the contact card: this visitor
+               has just read the three steps, and the card repeats them. On a phone
+               that is about a thousand pixels of scrolling saved on the one path
+               that matters. -->
+          <a href="#concept-form" class="btn btn-primary">Get my free concept</a>
+          <p class="offer-note">This is how we show you the thinking before you spend anything.</p>
+        </div>
       </div>
     </section>
 
@@ -5136,7 +5370,7 @@ html:not(.js) .dock-item-chat { display: none; }
         </article>
       </div>
 
-      <p class="pricing-note">Pricing depends on campaign scope, content volume, and advertising support needed.</p>
+      <p class="pricing-note">Every package starts with the same free concept, so you see the thinking before you spend anything. Pricing then depends on campaign scope, content volume, and advertising support needed.</p>
       <p class="pricing-note addon-note">New: <strong>Lead Response Systems</strong> can be added to any package.</p>
 
       <!-- A form of radio buttons, so the whole thing runs on CSS with no
@@ -5255,7 +5489,7 @@ html:not(.js) .dock-item-chat { display: none; }
         </svg>
         <span class="contact-mark logo-mark" aria-hidden="true"></span>
         <p class="contact-kicker">Start here</p>
-        <h2>Want a campaign concept for your business?</h2>
+        <h2>Want a free campaign concept for your business?</h2>
         <p>
           Send us your website or social media page, and we'll review your current digital presence
           to see where BrandLift can help.
@@ -6283,7 +6517,7 @@ window.addEventListener('load', updateActiveNavOnScroll);
   if (!('IntersectionObserver' in window)) return;
 
   const targets = document.querySelectorAll(
-    '.manifesto-label, .manifesto-copy, .services-section .section-kicker, .services-section .section-title-row, .service-card, .process-head, .process-lane article, .proof-copy, .compare-wrap, .packages-section .section-kicker, .packages-section .section-title-row, .package-card, .finder, .trust-strip, .testimonial-card, .contact-card'
+    '.offer, .manifesto-label, .manifesto-copy, .services-section .section-kicker, .services-section .section-title-row, .service-card, .process-head, .process-lane article, .proof-copy, .compare-wrap, .packages-section .section-kicker, .packages-section .section-title-row, .package-card, .finder, .trust-strip, .testimonial-card, .contact-card'
   );
 
   const observer = new IntersectionObserver((entries) => {
